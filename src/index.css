@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+}
+
+html { font-size: 16px; }
+body { @apply bg-slate-50 text-slate-900 antialiased; margin: 0; }
+:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+h1:focus, h2:focus { outline: none; }
+input[type='range'] { accent-color: #0e7490; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

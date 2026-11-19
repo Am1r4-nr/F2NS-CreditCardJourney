@@ -1,0 +1,371 @@
+{
+  "meta": {
+    "lastUpdated": "2026-11-19",
+    "note": {
+      "en": "Sample data for a prototype. Card names, rates and fees are illustrative and are not real bank products. Verify everything on each bank's official website.",
+      "ms": "Data contoh untuk prototaip. Nama kad, kadar dan yuran adalah ilustrasi dan bukan produk bank sebenar. Sila sahkan semuanya di laman web rasmi setiap bank."
+    }
+  },
+  "cards": [
+    {
+      "id": "maybank-starter-visa",
+      "bank": "Maybank", "bankShort": "MB", "name": "Starter Visa", "network": "Visa", "kind": "conventional", "tier": "classic",
+      "annualFee": 0, "annualFeeWaiver": null,
+      "interestPa": 17.5,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 10 },
+      "fxFeePercent": 1,
+      "minAge": 21, "minAnnualIncome": 24000,
+      "incomeProof": ["payslip", "bank_statement", "gig_statement"],
+      "supplementary": { "max": 2, "annualFee": 0 },
+      "rewards": { "type": "cashback", "summary": { "en": "Up to 1% cashback on groceries and e-wallet top-ups", "ms": "Tunai balik sehingga 1% untuk barangan runcit dan tambah nilai e-dompet" }, "valuePercent": 1 },
+      "welcomeOffer": null,
+      "instalment0": { "en": "0% for 6 months at selected merchants", "ms": "0% selama 6 bulan di peniaga terpilih" },
+      "digitalApplication": true,
+      "approvalTime": { "en": "Same day", "ms": "Hari yang sama" },
+      "secured": false,
+      "pros": [
+        { "en": "No annual fee", "ms": "Tiada yuran tahunan" },
+        { "en": "Accepts bank statements and gig earnings statements", "ms": "Menerima penyata bank dan penyata pendapatan gig" }
+      ],
+      "cons": [
+        { "en": "Interest rate is on the higher side", "ms": "Kadar faedah agak tinggi" },
+        { "en": "Small rewards", "ms": "Ganjaran kecil" }
+      ],
+      "bestFor": { "en": "Gig workers and first-timers who want a simple card with no yearly fee.", "ms": "Pekerja gig dan pengguna kali pertama yang mahu kad mudah tanpa yuran tahunan." },
+      "notFor": { "en": "People who carry a balance each month. The interest can add up.", "ms": "Mereka yang membawa baki setiap bulan. Faedah boleh bertambah." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/maybank"
+    },
+    {
+      "id": "cimb-cashback-mastercard",
+      "bank": "CIMB", "bankShort": "CB", "name": "Cashback Everyday Mastercard", "network": "Mastercard", "kind": "conventional", "tier": "gold",
+      "annualFee": 80, "annualFeeWaiver": { "en": "Free for the year if you spend RM12,000 in that year", "ms": "Percuma untuk tahun itu jika anda berbelanja RM12,000 dalam tahun tersebut" },
+      "interestPa": 15,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 10 },
+      "fxFeePercent": 1,
+      "minAge": 21, "minAnnualIncome": 30000,
+      "incomeProof": ["payslip", "bank_statement", "lhdn"],
+      "supplementary": { "max": 3, "annualFee": 0 },
+      "rewards": { "type": "cashback", "summary": { "en": "5% cashback on weekend dining, 0.2% on everything else (monthly cap applies)", "ms": "Tunai balik 5% untuk makan hujung minggu, 0.2% untuk lain-lain (had bulanan dikenakan)" }, "valuePercent": 1.5 },
+      "welcomeOffer": { "en": "RM30 cashback after your first RM300 spend", "ms": "Tunai balik RM30 selepas perbelanjaan pertama RM300" },
+      "instalment0": { "en": "0% for 12 months at selected merchants", "ms": "0% selama 12 bulan di peniaga terpilih" },
+      "digitalApplication": true,
+      "approvalTime": { "en": "1 to 3 working days", "ms": "1 hingga 3 hari bekerja" },
+      "secured": false,
+      "pros": [
+        { "en": "Good cashback for everyday spending", "ms": "Tunai balik yang baik untuk perbelanjaan harian" },
+        { "en": "Fee can be waived with enough spending", "ms": "Yuran boleh dikecualikan jika berbelanja cukup" }
+      ],
+      "cons": [
+        { "en": "Needs RM2,500 a month income", "ms": "Memerlukan pendapatan RM2,500 sebulan" },
+        { "en": "Annual fee applies if you do not reach the spending target", "ms": "Yuran tahunan dikenakan jika sasaran perbelanjaan tidak dicapai" }
+      ],
+      "bestFor": { "en": "Salaried people with steady spending who will pay in full.", "ms": "Orang bergaji dengan perbelanjaan tetap yang akan membayar penuh." },
+      "notFor": { "en": "Anyone who may not reach RM12,000 spend a year. The fee would apply.", "ms": "Sesiapa yang mungkin tidak mencapai belanja RM12,000 setahun. Yuran akan dikenakan." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/cimb"
+    },
+    {
+      "id": "public-bank-simple-visa",
+      "bank": "Public Bank", "bankShort": "PB", "name": "Simple Visa", "network": "Visa", "kind": "conventional", "tier": "classic",
+      "annualFee": 50, "annualFeeWaiver": { "en": "Free in year 1. After that, free if you swipe 12 times in a year", "ms": "Percuma pada tahun pertama. Selepas itu, percuma jika anda menggesek 12 kali setahun" },
+      "interestPa": 15,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 10 },
+      "fxFeePercent": 1,
+      "minAge": 21, "minAnnualIncome": 24000,
+      "incomeProof": ["payslip", "lhdn"],
+      "supplementary": { "max": 2, "annualFee": 25 },
+      "rewards": { "type": "points", "summary": { "en": "1 point for every RM1 spent", "ms": "1 mata untuk setiap RM1 dibelanjakan" }, "valuePercent": 0.4 },
+      "welcomeOffer": null,
+      "instalment0": null,
+      "digitalApplication": false,
+      "approvalTime": { "en": "3 to 7 working days", "ms": "3 hingga 7 hari bekerja" },
+      "secured": false,
+      "pros": [
+        { "en": "Simple rules and a clear fee waiver", "ms": "Peraturan mudah dan pengecualian yuran yang jelas" },
+        { "en": "Lower interest rate than some starter cards", "ms": "Kadar faedah lebih rendah daripada sesetengah kad permulaan" }
+      ],
+      "cons": [
+        { "en": "Needs a payslip or LHDN record", "ms": "Memerlukan slip gaji atau rekod LHDN" },
+        { "en": "Application is not fully digital", "ms": "Permohonan tidak sepenuhnya digital" }
+      ],
+      "bestFor": { "en": "People with a payslip who prefer a simple card.", "ms": "Mereka yang ada slip gaji dan mahu kad yang mudah." },
+      "notFor": { "en": "Gig workers without a payslip or LHDN record.", "ms": "Pekerja gig tanpa slip gaji atau rekod LHDN." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/public-bank"
+    },
+    {
+      "id": "rhb-campus-visa",
+      "bank": "RHB", "bankShort": "RH", "name": "Campus Visa", "network": "Visa", "kind": "conventional", "tier": "student",
+      "annualFee": 0, "annualFeeWaiver": null,
+      "interestPa": 18,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 10 },
+      "fxFeePercent": 1,
+      "minAge": 18, "minAnnualIncome": 12000,
+      "incomeProof": ["bank_statement", "payslip", "gig_statement"],
+      "supplementary": { "max": 0, "annualFee": 0 },
+      "rewards": { "type": "points", "summary": { "en": "Double points at cafes and bookstores", "ms": "Mata dua kali ganda di kafe dan kedai buku" }, "valuePercent": 0.6 },
+      "welcomeOffer": { "en": "Free student discount pack", "ms": "Pek diskaun pelajar percuma" },
+      "instalment0": { "en": "0% for 3 months on laptops and phones", "ms": "0% selama 3 bulan untuk komputer riba dan telefon" },
+      "digitalApplication": true,
+      "approvalTime": { "en": "Same day", "ms": "Hari yang sama" },
+      "secured": true,
+      "pros": [
+        { "en": "Made for students. Low income needed", "ms": "Dibuat untuk pelajar. Pendapatan rendah diperlukan" },
+        { "en": "Can be backed by a small fixed deposit", "ms": "Boleh disandarkan dengan simpanan tetap kecil" }
+      ],
+      "cons": [
+        { "en": "Interest rate is on the high side", "ms": "Kadar faedah agak tinggi" },
+        { "en": "Low credit limit", "ms": "Had kredit rendah" }
+      ],
+      "bestFor": { "en": "Students with part-time or internship income who want to start a credit record.", "ms": "Pelajar dengan pendapatan separuh masa atau latihan industri yang mahu memulakan rekod kredit." },
+      "notFor": { "en": "Anyone who may carry a balance. The 18% rate is costly.", "ms": "Sesiapa yang mungkin membawa baki. Kadar 18% adalah mahal." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/rhb"
+    },
+    {
+      "id": "hong-leong-wise-mastercard",
+      "bank": "Hong Leong", "bankShort": "HL", "name": "Wise Mastercard", "network": "Mastercard", "kind": "conventional", "tier": "gold",
+      "annualFee": 60, "annualFeeWaiver": { "en": "Free for life if you pay your bill by auto-debit", "ms": "Percuma sepanjang hayat jika anda membayar bil melalui debit automatik" },
+      "interestPa": 16,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 10 },
+      "fxFeePercent": 1,
+      "minAge": 21, "minAnnualIncome": 24000,
+      "incomeProof": ["payslip", "bank_statement", "lhdn"],
+      "supplementary": { "max": 3, "annualFee": 0 },
+      "rewards": { "type": "cashback", "summary": { "en": "Up to 5% cashback on selected online shops, with a monthly cap", "ms": "Tunai balik sehingga 5% di kedai dalam talian terpilih, dengan had bulanan" }, "valuePercent": 1.2 },
+      "welcomeOffer": { "en": "RM20 e-wallet credit", "ms": "Kredit e-dompet RM20" },
+      "instalment0": { "en": "0% for 12 months at selected merchants", "ms": "0% selama 12 bulan di peniaga terpilih" },
+      "digitalApplication": true,
+      "approvalTime": { "en": "1 to 2 working days", "ms": "1 hingga 2 hari bekerja" },
+      "secured": false,
+      "pros": [
+        { "en": "Fee waived if you use auto-debit", "ms": "Yuran dikecualikan jika anda guna debit automatik" },
+        { "en": "Three ways to show income", "ms": "Tiga cara menunjukkan pendapatan" }
+      ],
+      "cons": [
+        { "en": "Rewards have a monthly cap", "ms": "Ganjaran ada had bulanan" },
+        { "en": "Fee applies if you do not set up auto-debit", "ms": "Yuran dikenakan jika anda tidak menyediakan debit automatik" }
+      ],
+      "bestFor": { "en": "People who can set auto-debit to pay the full bill each month.", "ms": "Mereka yang boleh menetapkan debit automatik untuk bayar penuh bil setiap bulan." },
+      "notFor": { "en": "People who do not want to link a bank account for auto-debit.", "ms": "Mereka yang tidak mahu memaut akaun bank untuk debit automatik." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/hong-leong"
+    },
+    {
+      "id": "ambank-lite-amex",
+      "bank": "AmBank", "bankShort": "AM", "name": "Lite Amex", "network": "Amex", "kind": "conventional", "tier": "classic",
+      "annualFee": 100, "annualFeeWaiver": { "en": "Free for the first 2 years", "ms": "Percuma untuk 2 tahun pertama" },
+      "interestPa": 18,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 15, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 15 },
+      "fxFeePercent": 1.5,
+      "minAge": 21, "minAnnualIncome": 36000,
+      "incomeProof": ["payslip", "lhdn"],
+      "supplementary": { "max": 2, "annualFee": 50 },
+      "rewards": { "type": "points", "summary": { "en": "Extra points on dining and travel", "ms": "Mata tambahan untuk makan dan perjalanan" }, "valuePercent": 0.8 },
+      "welcomeOffer": { "en": "Bonus points after your first spend", "ms": "Mata bonus selepas perbelanjaan pertama anda" },
+      "instalment0": null,
+      "digitalApplication": false,
+      "approvalTime": { "en": "3 to 5 working days", "ms": "3 hingga 5 hari bekerja" },
+      "secured": false,
+      "pros": [
+        { "en": "Two years with no annual fee", "ms": "Dua tahun tanpa yuran tahunan" },
+        { "en": "Good for dining and travel", "ms": "Baik untuk makan dan perjalanan" }
+      ],
+      "cons": [
+        { "en": "Higher income needed", "ms": "Memerlukan pendapatan lebih tinggi" },
+        { "en": "Amex is accepted in fewer shops", "ms": "Amex diterima di lebih sedikit kedai" }
+      ],
+      "bestFor": { "en": "Salaried people who dine out and travel and pay in full.", "ms": "Orang bergaji yang kerap makan di luar dan melancong serta bayar penuh." },
+      "notFor": { "en": "First-timers on a tight budget, or anyone without a payslip.", "ms": "Pengguna kali pertama yang berbelanja ketat, atau sesiapa tanpa slip gaji." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/ambank"
+    },
+    {
+      "id": "bank-islam-barakah-visa",
+      "bank": "Bank Islam", "bankShort": "BI", "name": "Barakah Visa", "network": "Visa", "kind": "islamic", "tier": "gold",
+      "annualFee": 50, "annualFeeWaiver": { "en": "Free in year 1. After that, free if you spend RM6,000 in a year", "ms": "Percuma pada tahun pertama. Selepas itu, percuma jika anda berbelanja RM6,000 setahun" },
+      "interestPa": 15,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 10 },
+      "fxFeePercent": 1,
+      "minAge": 21, "minAnnualIncome": 24000,
+      "incomeProof": ["payslip", "bank_statement", "lhdn"],
+      "supplementary": { "max": 3, "annualFee": 0 },
+      "rewards": { "type": "points", "summary": { "en": "Points on halal-certified dining and groceries", "ms": "Mata untuk makan dan barangan runcit bertauliah halal" }, "valuePercent": 0.7 },
+      "welcomeOffer": null,
+      "instalment0": { "en": "0% profit for 6 months at selected merchants", "ms": "0% keuntungan selama 6 bulan di peniaga terpilih" },
+      "digitalApplication": true,
+      "approvalTime": { "en": "2 to 3 working days", "ms": "2 hingga 3 hari bekerja" },
+      "secured": false,
+      "pros": [
+        { "en": "Shariah-compliant. The rate is shown as a profit rate", "ms": "Patuh Syariah. Kadar ditunjukkan sebagai kadar keuntungan" },
+        { "en": "Low spending target to waive the fee", "ms": "Sasaran perbelanjaan rendah untuk mengecualikan yuran" }
+      ],
+      "cons": [
+        { "en": "Rewards are modest", "ms": "Ganjaran sederhana" },
+        { "en": "Fee applies if spending is below RM6,000 a year", "ms": "Yuran dikenakan jika perbelanjaan di bawah RM6,000 setahun" }
+      ],
+      "bestFor": { "en": "People who want an Islamic card and can show a payslip, bank statement or LHDN record.", "ms": "Mereka yang mahukan kad Islamik dan boleh tunjuk slip gaji, penyata bank atau rekod LHDN." },
+      "notFor": { "en": "Anyone who can only show a gig earnings statement.", "ms": "Sesiapa yang hanya boleh menunjukkan penyata pendapatan gig." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/bank-islam"
+    },
+    {
+      "id": "bank-rakyat-anggota-mastercard",
+      "bank": "Bank Rakyat", "bankShort": "BR", "name": "Anggota Mastercard", "network": "Mastercard", "kind": "islamic", "tier": "classic",
+      "annualFee": 30, "annualFeeWaiver": { "en": "Free if you are a Bank Rakyat cooperative member", "ms": "Percuma jika anda ahli koperasi Bank Rakyat" },
+      "interestPa": 14,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 10 },
+      "fxFeePercent": 1,
+      "minAge": 21, "minAnnualIncome": 24000,
+      "incomeProof": ["payslip", "lhdn"],
+      "supplementary": { "max": 2, "annualFee": 0 },
+      "rewards": { "type": "none", "summary": { "en": "No rewards. Lower rate instead", "ms": "Tiada ganjaran. Sebaliknya kadar lebih rendah" }, "valuePercent": 0 },
+      "welcomeOffer": null,
+      "instalment0": null,
+      "digitalApplication": false,
+      "approvalTime": { "en": "3 to 7 working days", "ms": "3 hingga 7 hari bekerja" },
+      "secured": false,
+      "pros": [
+        { "en": "Lower rate than most unsecured cards here", "ms": "Kadar lebih rendah daripada kebanyakan kad tanpa cagaran di sini" },
+        { "en": "Islamic card with a small fee", "ms": "Kad Islamik dengan yuran kecil" }
+      ],
+      "cons": [
+        { "en": "No rewards", "ms": "Tiada ganjaran" },
+        { "en": "Needs a payslip or LHDN record. Not fully digital", "ms": "Memerlukan slip gaji atau rekod LHDN. Tidak sepenuhnya digital" }
+      ],
+      "bestFor": { "en": "Cooperative members who want a low-rate Islamic card.", "ms": "Ahli koperasi yang mahukan kad Islamik berkadar rendah." },
+      "notFor": { "en": "People who want rewards or a fast digital application.", "ms": "Mereka yang mahukan ganjaran atau permohonan digital yang pantas." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/bank-rakyat"
+    },
+    {
+      "id": "uob-digital-visa",
+      "bank": "UOB", "bankShort": "UO", "name": "Digital Visa", "network": "Visa", "kind": "conventional", "tier": "gold",
+      "annualFee": 150, "annualFeeWaiver": { "en": "Free in year 1. After that, free if you spend RM15,000 in a year", "ms": "Percuma pada tahun pertama. Selepas itu, percuma jika anda berbelanja RM15,000 setahun" },
+      "interestPa": 15,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 15 },
+      "fxFeePercent": 1,
+      "minAge": 21, "minAnnualIncome": 30000,
+      "incomeProof": ["payslip", "lhdn"],
+      "supplementary": { "max": 2, "annualFee": 0 },
+      "rewards": { "type": "cashback", "summary": { "en": "Up to 10% cashback on online shopping, with a monthly cap", "ms": "Tunai balik sehingga 10% untuk beli-belah dalam talian, dengan had bulanan" }, "valuePercent": 1.8 },
+      "welcomeOffer": { "en": "RM50 cashback after RM500 spend in 60 days", "ms": "Tunai balik RM50 selepas belanja RM500 dalam 60 hari" },
+      "instalment0": { "en": "0% for 12 months at selected merchants", "ms": "0% selama 12 bulan di peniaga terpilih" },
+      "digitalApplication": true,
+      "approvalTime": { "en": "Same day", "ms": "Hari yang sama" },
+      "secured": false,
+      "pros": [
+        { "en": "Strong online cashback", "ms": "Tunai balik dalam talian yang kukuh" },
+        { "en": "Same-day digital approval", "ms": "Kelulusan digital pada hari yang sama" }
+      ],
+      "cons": [
+        { "en": "High annual fee after year 1 unless you spend RM15,000", "ms": "Yuran tahunan tinggi selepas tahun 1 kecuali anda berbelanja RM15,000" },
+        { "en": "Needs a payslip or LHDN record", "ms": "Memerlukan slip gaji atau rekod LHDN" }
+      ],
+      "bestFor": { "en": "Salaried online shoppers who will pay in full.", "ms": "Pembeli dalam talian yang bergaji dan akan membayar penuh." },
+      "notFor": { "en": "Low spenders. The RM150 fee would apply after year 1.", "ms": "Mereka yang berbelanja rendah. Yuran RM150 akan dikenakan selepas tahun 1." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/uob"
+    },
+    {
+      "id": "standard-chartered-smart-platinum",
+      "bank": "Standard Chartered", "bankShort": "SC", "name": "Smart Platinum Visa", "network": "Visa", "kind": "conventional", "tier": "platinum",
+      "annualFee": 150, "annualFeeWaiver": { "en": "Free in year 1 only", "ms": "Percuma pada tahun pertama sahaja" },
+      "interestPa": 15,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 10 },
+      "fxFeePercent": 1,
+      "minAge": 21, "minAnnualIncome": 48000,
+      "incomeProof": ["payslip", "lhdn"],
+      "supplementary": { "max": 3, "annualFee": 0 },
+      "rewards": { "type": "miles", "summary": { "en": "1 air mile for every RM2 spent", "ms": "1 batu udara untuk setiap RM2 dibelanjakan" }, "valuePercent": 1 },
+      "welcomeOffer": { "en": "One airport lounge pass", "ms": "Satu pas lounge lapangan terbang" },
+      "instalment0": { "en": "0% for 6 months at selected merchants", "ms": "0% selama 6 bulan di peniaga terpilih" },
+      "digitalApplication": true,
+      "approvalTime": { "en": "3 to 5 working days", "ms": "3 hingga 5 hari bekerja" },
+      "secured": false,
+      "pros": [
+        { "en": "Travel perks and air miles", "ms": "Kelebihan perjalanan dan batu udara" },
+        { "en": "Digital application", "ms": "Permohonan digital" }
+      ],
+      "cons": [
+        { "en": "Needs RM4,000 a month income", "ms": "Memerlukan pendapatan RM4,000 sebulan" },
+        { "en": "Fee returns after year 1", "ms": "Yuran dikenakan semula selepas tahun 1" }
+      ],
+      "bestFor": { "en": "Higher earners who travel often.", "ms": "Mereka berpendapatan lebih tinggi yang kerap melancong." },
+      "notFor": { "en": "Most first-time users. It is hard to qualify as a beginner.", "ms": "Kebanyakan pengguna kali pertama. Sukar untuk layak sebagai pemula." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/standard-chartered"
+    },
+    {
+      "id": "hsbc-secured-visa",
+      "bank": "HSBC", "bankShort": "HS", "name": "Secured Visa", "network": "Visa", "kind": "conventional", "tier": "secured",
+      "annualFee": 0, "annualFeeWaiver": null,
+      "interestPa": 12,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 10 },
+      "fxFeePercent": 1,
+      "minAge": 21, "minAnnualIncome": 12000,
+      "incomeProof": ["payslip", "bank_statement", "lhdn", "gig_statement"],
+      "supplementary": { "max": 0, "annualFee": 0 },
+      "rewards": { "type": "cashback", "summary": { "en": "0.2% cashback on all spending", "ms": "Tunai balik 0.2% untuk semua perbelanjaan" }, "valuePercent": 0.2 },
+      "welcomeOffer": null,
+      "instalment0": null,
+      "digitalApplication": true,
+      "approvalTime": { "en": "1 to 2 working days", "ms": "1 hingga 2 hari bekerja" },
+      "secured": true,
+      "pros": [
+        { "en": "Backed by your own fixed deposit, so approval is easier", "ms": "Disandarkan dengan simpanan tetap anda, jadi kelulusan lebih mudah" },
+        { "en": "No annual fee and a lower rate", "ms": "Tiada yuran tahunan dan kadar lebih rendah" }
+      ],
+      "cons": [
+        { "en": "You must lock a deposit (for example RM1,000) as long as you hold the card", "ms": "Anda perlu mengunci deposit (contohnya RM1,000) selagi anda memegang kad" },
+        { "en": "Credit limit matches your deposit", "ms": "Had kredit sama dengan deposit anda" }
+      ],
+      "bestFor": { "en": "Thin-file users with little proof of income who can set aside a deposit.", "ms": "Pengguna fail nipis dengan sedikit bukti pendapatan yang boleh mengetepikan deposit." },
+      "notFor": { "en": "Anyone who cannot lock away a deposit for a long time.", "ms": "Sesiapa yang tidak boleh mengunci deposit untuk tempoh lama." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/hsbc"
+    },
+    {
+      "id": "affin-gig-start-mastercard",
+      "bank": "Affin", "bankShort": "AF", "name": "Gig-Start Mastercard", "network": "Mastercard", "kind": "conventional", "tier": "classic",
+      "annualFee": 40, "annualFeeWaiver": { "en": "Free in year 1. After that, free if you swipe 6 times in a year", "ms": "Percuma pada tahun pertama. Selepas itu, percuma jika anda menggesek 6 kali setahun" },
+      "interestPa": 18,
+      "minPayment": { "percent": 5, "floor": 50 },
+      "lateFee": { "flat": 10, "percent": 1 },
+      "cashAdvance": { "percent": 5, "min": 10 },
+      "fxFeePercent": 1,
+      "minAge": 21, "minAnnualIncome": 18000,
+      "incomeProof": ["bank_statement", "gig_statement", "lhdn"],
+      "supplementary": { "max": 1, "annualFee": 0 },
+      "rewards": { "type": "cashback", "summary": { "en": "Cashback on fuel, groceries and ride-hailing", "ms": "Tunai balik untuk minyak, barangan runcit dan e-hailing" }, "valuePercent": 0.8 },
+      "welcomeOffer": { "en": "RM15 fuel voucher", "ms": "Baucar minyak RM15" },
+      "instalment0": null,
+      "digitalApplication": true,
+      "approvalTime": { "en": "2 to 3 working days", "ms": "2 hingga 3 hari bekerja" },
+      "secured": false,
+      "pros": [
+        { "en": "Built for gig workers. No payslip needed", "ms": "Dibina untuk pekerja gig. Slip gaji tidak diperlukan" },
+        { "en": "Rewards on fuel and ride-hailing costs", "ms": "Ganjaran untuk kos minyak dan e-hailing" }
+      ],
+      "cons": [
+        { "en": "High interest rate. Pay in full to avoid it", "ms": "Kadar faedah tinggi. Bayar penuh untuk mengelakkannya" },
+        { "en": "Only 1 supplementary card", "ms": "Hanya 1 kad tambahan" }
+      ],
+      "bestFor": { "en": "E-hailing and delivery workers who can show 6 months of earnings in a bank or e-wallet.", "ms": "Pekerja e-hailing dan penghantaran yang boleh tunjuk pendapatan 6 bulan dalam bank atau e-dompet." },
+      "notFor": { "en": "People who may not pay in full. The 18% rate is costly.", "ms": "Mereka yang mungkin tidak bayar penuh. Kadar 18% adalah mahal." },
+      "lastUpdated": "2026-11-19", "sourceUrl": "https://example.com/banks/affin"
+    }
+  ]
+}
