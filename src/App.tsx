@@ -1,6 +1,6 @@
 import { useEffect, type ReactElement } from 'react';
 import { useRoute, type Route } from './lib/router.ts';
-import { Footer, HelpWidget, Header, PrototypeBanner, Stepper, STAGES } from './components/layout.tsx';
+import { Footer, HelpWidget, Header, JourneyNavProvider, PrototypeBanner, Stepper, STAGES } from './components/layout.tsx';
 import { useApp } from './state/store.tsx';
 import { HomePage } from './pages/Home.tsx';
 import { ReadyPage } from './pages/Ready.tsx';
@@ -45,6 +45,7 @@ export function App() {
   }, [route]);
 
   return (
+    <JourneyNavProvider>
     <div className="min-h-screen">
       <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('page-title')?.focus(); }} className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-white focus:p-3">
         Skip to content
@@ -59,5 +60,6 @@ export function App() {
       {state.demo && <Walkthrough />}
       <HelpWidget lifted={lifted} demo={state.demo} />
     </div>
+    </JourneyNavProvider>
   );
 }
