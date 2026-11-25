@@ -19,14 +19,14 @@ export function Button({ variant = 'primary', className = '', ...p }: ButtonHTML
   );
 }
 
-export function LinkButton({ href, children, variant = 'primary', className = '' }: { href: string; children: ReactNode; variant?: Variant; className?: string }) {
+export function LinkButton({ href, children, variant = 'primary', className = '', onClick }: { href: string; children: ReactNode; variant?: Variant; className?: string; onClick?: () => void }) {
   const styles: Record<Variant, string> = {
     primary: 'rounded-xl bg-cyan-700 text-white hover:bg-cyan-800',
     secondary: 'rounded-full border-[1.5px] border-cyan-700 bg-white/40 text-cyan-800 hover:bg-white',
     ghost: 'rounded-xl text-cyan-800 hover:bg-white/60',
   };
   return (
-    <a href={href} className={`inline-flex min-h-12 items-center justify-center px-6 py-3 text-base font-semibold ${styles[variant]} ${className}`}>
+    <a href={href} onClick={onClick} className={`inline-flex min-h-12 items-center justify-center px-6 py-3 text-base font-semibold ${styles[variant]} ${className}`}>
       {children}
     </a>
   );

@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLang, bi } from '../i18n/index.tsx';
 import { hafizDemoState, useApp } from '../state/store.tsx';
-import { href, navigate, type Route } from '../lib/router.ts';
+import { href, navigate, useRoute, type Route } from '../lib/router.ts';
 import { PLACEHOLDERS } from '../config/rates.ts';
 import type { StageKey } from '../state/types.ts';
 import { Button, Callout } from './ui.tsx';
@@ -29,10 +29,14 @@ export function PrototypeBanner() {
   );
 }
 
-/** Sidebar entries: Home plus the five journey stages. */
+/** The timeline covers getting ready to apply. Track and Use it well are separate pages. */
+export const TIMELINE_STAGES = STAGES.slice(0, 3);
+
 export const SIDEBAR_NAV: { route: Route; label: ReturnType<typeof bi> }[] = [
   { route: 'home', label: bi('Home', 'Utama') },
-  ...STAGES.map((s) => ({ route: s.route, label: s.label })),
+  { route: 'apply', label: bi('Start applying', 'Mula memohon') },
+  { route: 'track', label: bi('Track Application', 'Jejak Permohonan') },
+  { route: 'use', label: bi('Use it well', 'Guna dengan bijak') },
 ];
 
 /**
@@ -46,22 +50,25 @@ interface JourneyNav {
 const JourneyNavContext = createContext<JourneyNav>({ guard: () => {} });
 
 export function JourneyNavProvider({ children }: { children: ReactNode }) {
-  const { state } = useApp();
+  const { state, update } = useApp();
   const { t } = useLang();
+  const currentRoute = useRoute();
   const [pending, setPending] = useState<Route | null>(null);
-  const firstOpen = STAGES.findIndex((s) => !state.done[s.key]);
+  const firstOpen = TIMELINE_STAGES.findIndex((s) => !state.done[s.key]);
 
   const guard: JourneyNav['guard'] = (route, e) => {
-    const target = STAGES.findIndex((s) => s.route === route);
-    if (target === -1 || firstOpen === -1 || target <= firstOpen) return;
+    const target = TIMELINE_STAGES.findIndex((s) => s.route === route);
+    const here = TIMELINE_STAGES.findIndex((s) => s.route === currentRoute);
+    // Going back (or staying) never needs a warning.
+    if (target === -1 || firstOpen === -1 || target <= firstOpen || target <= here) return;
     e.preventDefault();
     setPending(route);
   };
 
   const close = () => setPending(null);
   const ref = useDialog<HTMLDivElement>(pending !== null, close);
-  const skipped = pending ? STAGES.slice(firstOpen, STAGES.findIndex((s) => s.route === pending)) : [];
-  const targetLabel = pending ? STAGES.find((s) => s.route === pending)?.label : undefined;
+  const skipped = pending ? TIMELINE_STAGES.slice(firstOpen, TIMELINE_STAGES.findIndex((s) => s.route === pending)) : [];
+  const targetLabel = pending ? TIMELINE_STAGES.find((s) => s.route === pending)?.label : undefined;
 
   return (
     <JourneyNavContext.Provider value={{ guard }}>
@@ -78,7 +85,17 @@ export function JourneyNavProvider({ children }: { children: ReactNode }) {
             </p>
             <div className="mt-5 flex flex-wrap justify-end gap-2">
               <Button data-autofocus variant="secondary" onClick={close}>{t(bi('Stay here', 'Kekal di sini'))}</Button>
-              <Button onClick={() => { const r = pending; close(); navigate(r); }}>{t(bi('Yes, skip', 'Ya, langkau'))}</Button>
+              <Button onClick={() => {
+                const r = pending;
+                update((st) => {
+                  // Skipped stages count as not done, even if the user only opened the page.
+                  const flags = Object.fromEntries(skipped.map((x) => [x.key, true]));
+                  const notDone = Object.fromEntries(skipped.map((x) => [x.key, false]));
+                  return { ...st, skipped: { ...st.skipped, ...flags }, done: { ...st.done, ...notDone } };
+                });
+                close();
+                navigate(r);
+              }}>{t(bi('Yes, skip', 'Ya, langkau'))}</Button>
             </div>
           </div>
         </div>
@@ -90,6 +107,7 @@ export function JourneyNavProvider({ children }: { children: ReactNode }) {
 export function Sidebar({ open, onClose, route }: { open: boolean; onClose: () => void; route: Route }) {
   const { t } = useLang();
   const { guard } = useContext(JourneyNavContext);
+  const { state } = useApp();
   const ref = useDialog<HTMLDivElement>(open, onClose);
   // Stay mounted while the closing animation plays, then unmount.
   const [rendered, setRendered] = useState(open);
@@ -127,18 +145,24 @@ export function Sidebar({ open, onClose, route }: { open: boolean; onClose: () =
         </div>
         <nav aria-label={t(bi('Main', 'Utama'))}>
           <ul className="space-y-1">
-            {SIDEBAR_NAV.map((n) => (
-              <li key={n.route}>
-                <a
-                  href={href(n.route)}
-                  aria-current={route === n.route ? 'page' : undefined}
-                  onClick={(e) => { onClose(); guard(n.route, e); }}
-                  className={`flex min-h-11 items-center rounded-xl px-4 text-base font-semibold ${route === n.route ? 'bg-cyan-700 text-white' : 'text-cyan-900 hover:bg-cyan-50'}`}
-                >
-                  {t(n.label)}
-                </a>
-              </li>
-            ))}
+            {SIDEBAR_NAV.map((n) => {
+              // "Start applying" resumes the timeline step the user was last on.
+              const resume = n.route === 'apply';
+              const target: Route = resume ? state.lastStage : n.route;
+              const current = resume ? route === 'ready' || route === 'cost' || route === 'apply' : route === n.route;
+              return (
+                <li key={n.route}>
+                  <a
+                    href={href(target)}
+                    aria-current={current ? 'page' : undefined}
+                    onClick={(e) => { onClose(); if (!resume) guard(n.route, e); }}
+                    className={`flex min-h-11 items-center rounded-xl px-4 text-base font-semibold ${current ? 'bg-cyan-700 text-white' : 'text-cyan-900 hover:bg-cyan-50'}`}
+                  >
+                    {t(n.label)}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </nav>
       </div>
@@ -214,49 +238,57 @@ export function Header({ route }: { route: Route }) {
 
 /** Journey timeline: shows where the user is. Jumping ahead of the first unfinished stage asks first. */
 export function Stepper({ route }: { route: Route }) {
-  const { state } = useApp();
+  const { state, resetAll } = useApp();
   const { t } = useLang();
   const { guard } = useContext(JourneyNavContext);
-  const current = STAGES.findIndex((s) => s.route === route);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const resetRef = useDialog<HTMLDivElement>(confirmReset, () => setConfirmReset(false));
+  const current = TIMELINE_STAGES.findIndex((s) => s.route === route);
+  // How far along the user is. Connector lines are only coloured up to this step.
+  const reached = current >= 0 ? current : TIMELINE_STAGES.findIndex((s) => s.route === state.lastStage);
   const onCompare = route === 'compare';
   return (
     <nav aria-label={t(bi('Your journey', 'Perjalanan anda'))} className="mx-auto max-w-screen-2xl px-4 sm:px-8 lg:px-12 pt-4">
       <ol className="flex">
-        {STAGES.map((s, i) => {
+        {TIMELINE_STAGES.map((s, i) => {
           const isCurrent = i === current;
           const done = state.done[s.key];
-          const last = i === STAGES.length - 1;
+          const skipped = !done && state.skipped[s.key];
+          const last = i === TIMELINE_STAGES.length - 1;
+          const circle = isCurrent
+            ? 'border-cyan-700 bg-cyan-700 text-white'
+            : done
+              ? 'border-emerald-600 bg-emerald-600 text-white'
+              : skipped
+                ? 'border-orange-500 bg-orange-500 text-white'
+                : 'border-slate-300 bg-white text-slate-600';
+          const text = isCurrent ? 'text-cyan-800' : done ? 'text-emerald-900' : skipped ? 'text-orange-800' : 'text-slate-700';
+          const status = isCurrent ? bi('you are here', 'anda di sini') : done ? bi('done', 'siap') : skipped ? bi('skipped', 'dilangkau') : bi('not started', 'belum bermula');
           return (
             <li key={s.key} className="relative min-w-0 flex-1" aria-current={isCurrent ? 'step' : undefined}>
               {!last && (
-                <span aria-hidden="true" className={`absolute left-1/2 top-[1.15rem] h-1 w-full rounded ${done ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                <span aria-hidden="true" className={`absolute left-1/2 top-[1.15rem] h-1 w-full rounded ${i >= reached ? 'bg-slate-300' : done ? 'bg-emerald-500' : skipped ? 'bg-orange-400' : 'bg-slate-300'}`} />
               )}
               <a
                 href={href(s.route)}
                 onClick={(e) => guard(s.route, e)}
                 className="relative flex min-h-14 flex-col items-center gap-1 px-1 text-center text-xs font-semibold sm:text-sm"
               >
-                <span
-                  aria-hidden="true"
-                  className={`z-10 grid h-9 w-9 shrink-0 place-items-center rounded-full border-4 text-base font-bold ${
-                    isCurrent ? 'border-cyan-700 bg-cyan-700 text-white' : done ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 bg-white text-slate-600'
-                  }`}
-                >
-                  {done && !isCurrent ? '✓' : i + 1}
+                <span aria-hidden="true" className={`z-10 grid h-9 w-9 shrink-0 place-items-center rounded-full border-4 text-base font-bold ${circle}`}>
+                  {isCurrent ? i + 1 : done ? '✓' : skipped ? '!' : i + 1}
                 </span>
-                <span className={isCurrent ? 'text-cyan-800' : done ? 'text-emerald-900' : 'text-slate-700'}>
+                <span className={text}>
                   {t(s.label)}
-                  <span className="sr-only">
-                    {' '}({isCurrent ? t(bi('you are here', 'anda di sini')) : done ? t(bi('done', 'siap')) : t(bi('not started', 'belum bermula'))})
-                  </span>
+                  <span className="sr-only"> ({t(status)})</span>
                 </span>
                 {isCurrent && <span aria-hidden="true" className="text-[0.7rem] font-bold uppercase tracking-wide text-cyan-700">{t(bi('You are here', 'Anda di sini'))}</span>}
+                {skipped && !isCurrent && <span aria-hidden="true" className="text-[0.7rem] font-bold uppercase tracking-wide text-orange-700">{t(bi('Skipped', 'Dilangkau'))}</span>}
               </a>
             </li>
           );
         })}
       </ol>
-      <p className="mt-1 text-center text-sm">
+      <div className="mt-1 flex flex-wrap items-center justify-center gap-x-4 text-sm">
         <a
           href={href('compare')}
           aria-current={onCompare ? 'page' : undefined}
@@ -264,7 +296,27 @@ export function Stepper({ route }: { route: Route }) {
         >
           {t(bi('Compare cards', 'Banding kad'))} ({t(bi('optional', 'pilihan'))})
         </a>
-      </p>
+        <button type="button" onClick={() => setConfirmReset(true)} className="inline-flex min-h-11 items-center rounded-full px-4 font-semibold text-slate-700 underline">
+          {t(bi('Reset and start over', 'Set semula dan mula semula'))}
+        </button>
+      </div>
+      {confirmReset && (
+        <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-900/50 p-4">
+          <div ref={resetRef} role="alertdialog" aria-modal="true" aria-labelledby="reset-h" aria-describedby="reset-d" tabIndex={-1} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <h2 id="reset-h" className="text-xl font-extrabold">{t(bi('Reset the whole process?', 'Set semula keseluruhan proses?'))}</h2>
+            <p id="reset-d" className="mt-2 text-slate-700">
+              {t(bi(
+                'This clears your answers, application draft, chosen card and progress, then takes you back to Am I ready?. Workshop feedback is kept.',
+                'Ini memadam jawapan, draf permohonan, kad pilihan dan kemajuan anda, kemudian membawa anda kembali ke Sedia kah saya?. Maklum balas bengkel dikekalkan.',
+              ))}
+            </p>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <Button data-autofocus variant="secondary" onClick={() => setConfirmReset(false)}>{t(bi('Cancel', 'Batal'))}</Button>
+              <Button onClick={() => { setConfirmReset(false); resetAll(); navigate('ready'); }}>{t(bi('Reset and start', 'Set semula dan mula'))}</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

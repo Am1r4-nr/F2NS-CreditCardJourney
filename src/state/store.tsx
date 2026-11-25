@@ -49,6 +49,8 @@ export function initialState(): AppState {
     compare: initialCompare(),
     selectedCardId: null,
     done: { ready: false, cost: false, apply: false, track: false, use: false },
+    skipped: { ready: false, cost: false, apply: false, track: false, use: false },
+    lastStage: 'ready',
   };
 }
 
@@ -77,6 +79,7 @@ function load(): AppState {
       compare,
       selectedCardId: parsed.selectedCardId && known.has(parsed.selectedCardId) ? parsed.selectedCardId : null,
       done: { ...base.done, ...parsed.done },
+      skipped: { ...base.skipped, ...parsed.skipped },
     };
   } catch {
     return base;
@@ -110,6 +113,8 @@ export function hafizDemoState(prev: AppState): AppState {
     track: { outcome: 'approved', stage: 0 },
     use: { ...initialState().use },
     done: { ready: false, cost: false, apply: false, track: false, use: false },
+    skipped: { ready: false, cost: false, apply: false, track: false, use: false },
+    lastStage: 'ready',
   };
 }
 
