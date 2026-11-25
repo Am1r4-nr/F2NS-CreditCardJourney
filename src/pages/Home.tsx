@@ -5,6 +5,8 @@ import { Callout, Card, LinkButton } from '../components/ui.tsx';
 import { PERSONAS } from '../state/personas.ts';
 import { STAGES } from '../components/layout.tsx';
 import { DECISION_TIME } from '../config/rates.ts';
+import { BANKS, CARDS } from '../data/cards.ts';
+import { HeroCard } from '../components/HeroCard.tsx';
 
 const STAGE_TEXT = [
   bi('Check if you are likely to qualify. Free. No effect on your credit record.', 'Semak jika anda berkemungkinan layak. Percuma. Tiada kesan pada rekod kredit.'),
@@ -28,29 +30,52 @@ export function HomePage() {
 
   return (
     <div className="space-y-10">
-      <section className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-cyan-700 via-cyan-800 to-teal-700 p-6 text-white sm:p-10">
-        <p className="text-sm font-bold uppercase tracking-wider text-cyan-100">{t(bi('Your first credit card', 'Kad kredit pertama anda'))}</p>
-        <h1 id="page-title" tabIndex={-1} className="mt-2 max-w-2xl text-3xl font-extrabold leading-tight sm:text-5xl">
-          {t(bi('Get your first card. Know the cost. Build good credit.', 'Dapatkan kad pertama anda. Ketahui kosnya. Bina kredit yang baik.'))}
-        </h1>
-        <p className="mt-4 max-w-xl text-lg text-cyan-50">
-          {t(bi(
-            'A calm, step-by-step guide for young adults in Malaysia. No payslip needed. No hidden fees. Clear reasons for every decision.',
-            'Panduan tenang, langkah demi langkah untuk anak muda di Malaysia. Tiada slip gaji diperlukan. Tiada yuran tersembunyi. Sebab jelas untuk setiap keputusan.',
-          ))}
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <LinkButton href={href('ready')} className="!bg-white !text-cyan-900 hover:!bg-cyan-50">
-            {t(bi('Check if I am ready', 'Semak jika saya sedia'))}
-          </LinkButton>
-          <LinkButton href={href('cost')} variant="secondary" className="!border-white !bg-transparent !text-white hover:!bg-white/10">
-            {t(bi('See what it costs', 'Lihat kosnya'))}
-          </LinkButton>
+      <section className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/55 p-6 shadow-[0_20px_60px_rgba(31,37,99,0.08)] backdrop-blur-sm sm:p-10 lg:p-14">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-cyan-600">{t(bi('Your first credit card', 'Kad kredit pertama anda'))}</p>
+            <h1 id="page-title" tabIndex={-1} className="mt-3 max-w-xl text-4xl font-bold leading-[1.1] text-cyan-800 sm:text-5xl">
+              {t(bi('Credit, made simple. Know the cost first.', 'Kredit, dipermudahkan. Ketahui kosnya dahulu.'))}
+            </h1>
+            <p className="mt-4 max-w-md text-lg text-cyan-800/80">
+              {t(bi(
+                'A calm, step-by-step guide for young adults in Malaysia. No payslip needed. No hidden fees. Clear reasons for every decision.',
+                'Panduan tenang, langkah demi langkah untuk anak muda di Malaysia. Tiada slip gaji diperlukan. Tiada yuran tersembunyi. Sebab jelas untuk setiap keputusan.',
+              ))}
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <LinkButton href={href('ready')}>{t(bi('Get started', 'Mulakan'))}</LinkButton>
+              <LinkButton href={href('cost')} variant="secondary">{t(bi('See what it costs', 'Lihat kosnya'))}</LinkButton>
+            </div>
+            <p className="mt-4 text-sm text-cyan-800/70">
+              {t(bi('Decision: in-principle right away. Final approval ', 'Keputusan: dalam prinsip serta-merta. Kelulusan akhir '))}
+              {t(bi(DECISION_TIME.en, DECISION_TIME.ms))}.
+            </p>
+            <ul className="mt-9 max-w-sm">
+              <li className="border-t border-cyan-700/20">
+                <a href={href('ready')} className="flex min-h-16 items-center justify-between gap-4 py-3">
+                  <span>
+                    <span className="block text-xs text-cyan-800/75">{t(bi('Free. No effect on your credit record', 'Percuma. Tiada kesan pada rekod kredit anda'))}</span>
+                    <span className="block text-lg font-semibold text-cyan-800">{t(bi('Am I ready?', 'Sedia kah saya?'))}</span>
+                  </span>
+                  <span aria-hidden="true" className="text-2xl text-cyan-700">→</span>
+                </a>
+              </li>
+              <li className="border-t border-cyan-700/20">
+                <a href={href('compare')} className="flex min-h-16 items-center justify-between gap-4 py-3">
+                  <span>
+                    <span className="block text-xs text-cyan-800/75">{t(bi(`${CARDS.length} real cards from ${BANKS.length} banks`, `${CARDS.length} kad sebenar daripada ${BANKS.length} bank`))}</span>
+                    <span className="block text-lg font-semibold text-cyan-800">{t(bi('Compare cards', 'Banding kad'))}</span>
+                  </span>
+                  <span aria-hidden="true" className="text-2xl text-cyan-700">→</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div className="flex justify-center lg:justify-end">
+            <HeroCard />
+          </div>
         </div>
-        <p className="mt-4 text-sm text-cyan-100">
-          {t(bi('Decision: in-principle right away. Final approval ', 'Keputusan: dalam prinsip serta-merta. Kelulusan akhir '))}
-          {t(bi(DECISION_TIME.en, DECISION_TIME.ms))}.
-        </p>
       </section>
 
       {hasDraft && (
@@ -78,7 +103,7 @@ export function HomePage() {
       <section aria-labelledby="cmp-h" className="rounded-3xl border border-cyan-300 bg-cyan-50 p-6">
         <h2 id="cmp-h" className="text-2xl font-extrabold">{t(bi('Not sure which card? Compare them first', 'Tidak pasti kad mana? Banding dahulu'))}</h2>
         <p className="mb-4 mt-1 text-lg text-slate-700">
-          {t(bi('See cards from 12 Malaysian banks side by side: fees, rates, income needed and what proof they accept. This step is optional.', 'Lihat kad daripada 12 bank di Malaysia secara bersebelahan: yuran, kadar, pendapatan diperlukan dan bukti yang diterima. Langkah ini pilihan.'))}
+          {t(bi(`See ${CARDS.length} cards from ${BANKS.length} Malaysian banks side by side: fees, rates, income needed and what proof they list. This step is optional.`, `Lihat ${CARDS.length} kad daripada ${BANKS.length} bank di Malaysia secara bersebelahan: yuran, kadar, pendapatan diperlukan dan bukti yang disenaraikan. Langkah ini pilihan.`))}
         </p>
         <LinkButton href={href('compare')}>{t(bi('Compare cards', 'Banding kad'))}</LinkButton>
       </section>

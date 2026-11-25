@@ -7,6 +7,7 @@ import { DECISION_TIME, RATES } from '../config/rates.ts';
 import { BANK_ACCESS, DOCUMENTS, PROOF_OPTIONS } from '../data/documents.ts';
 import type { CardRecord } from '../data/cardTypes.ts';
 import { money, parseAmount } from '../lib/format.ts';
+import { NOT_STATED, cashAdvanceText, fxText, incomeText, interestText, lateFeeText, minPaymentText, serviceTaxText } from '../lib/cardText.ts';
 import { scanMyKad, verifyIncome } from '../lib/mockApi.ts';
 import { Badge, Button, Callout, Card, Field, inputClass, Spinner, WhyAsk } from './ui.tsx';
 
@@ -259,7 +260,7 @@ export function ProofQ({ draft, patch, error }: QProps) {
                 <span className="flex items-center gap-2">
                   <input type="radio" name="proof" className="h-5 w-5" checked={on} onChange={() => choose(o.id)} />
                   <span aria-hidden="true" className="text-2xl">{o.icon}</span>
-                  <span className="text-lg font-extrabold leading-tight">{t(o.title)}</span>
+                  <span className="text-lg font-bold leading-tight">{t(o.title)}</span>
                 </span>
                 {o.id === 'bank' && <span><Badge tone="good">★ {t(bi('Recommended', 'Disyorkan'))}</Badge></span>}
                 <span className="text-base">{t(o.summary)}</span>
@@ -275,11 +276,11 @@ export function ProofQ({ draft, patch, error }: QProps) {
           <h4 className="text-xl font-extrabold">{t(bi('What we can and cannot see', 'Apa yang kami boleh dan tidak boleh lihat'))}</h4>
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-3">
-              <p className="font-extrabold text-emerald-900">✔ {t(bi('We can see (last 6 months)', 'Kami boleh lihat (6 bulan terakhir)'))}</p>
+              <p className="font-bold text-emerald-900">✔ {t(bi('We can see (last 6 months)', 'Kami boleh lihat (6 bulan terakhir)'))}</p>
               <ul className="mt-1 list-disc space-y-1 pl-5">{BANK_ACCESS.yes.map((x, i) => <li key={i}>{t(x)}</li>)}</ul>
             </div>
             <div className="rounded-2xl border border-rose-300 bg-rose-50 p-3">
-              <p className="font-extrabold text-rose-900">✘ {t(bi('We can never see', 'Kami tidak boleh lihat sama sekali'))}</p>
+              <p className="font-bold text-rose-900">✘ {t(bi('We can never see', 'Kami tidak boleh lihat sama sekali'))}</p>
               <ul className="mt-1 list-disc space-y-1 pl-5">{BANK_ACCESS.no.map((x, i) => <li key={i}>{t(x)}</li>)}</ul>
             </div>
           </div>
@@ -340,7 +341,7 @@ function Stat({ label, value, strong }: { label: Bi; value: string; strong?: boo
   return (
     <div className="rounded-xl bg-white p-2">
       <dt className="text-xs text-slate-600">{t(label)}</dt>
-      <dd className={strong ? 'text-xl font-extrabold' : 'text-lg font-bold'}>{value}</dd>
+      <dd className={strong ? 'text-xl font-bold' : 'text-lg font-bold'}>{value}</dd>
     </div>
   );
 }
@@ -366,26 +367,32 @@ function ConsentAndGo({ consent, onConsent, busy, onGo, label, go, busyText }: {
 export function CostSummary({ card }: { card?: CardRecord }) {
   const { t } = useLang();
   const R = RATES;
-  const rate = card?.interestPa ?? R.aprPercent;
-  const rows: { label: Bi; value: Bi }[] = [
-    { label: bi('Card', 'Kad'), value: card ? { en: `${card.bank} ${card.name}`, ms: `${card.bank} ${card.name}` } : { en: 'KAF First Card (standard example terms)', ms: 'KAF First Card (terma contoh standard)' } },
-    { label: bi('Interest rate', 'Kadar faedah'), value: { en: `${rate}% a year, only on what you do not pay by the due date`, ms: `${rate}% setahun, hanya atas yang tidak dibayar sebelum tarikh akhir` } },
-    { label: bi('Minimum payment', 'Bayaran minimum'), value: { en: `${card?.minPayment.percent ?? R.minPaymentPercent}% of what you owe or ${money(card?.minPayment.floor ?? R.minPaymentFloor)}, whichever is higher`, ms: `${card?.minPayment.percent ?? R.minPaymentPercent}% daripada hutang atau ${money(card?.minPayment.floor ?? R.minPaymentFloor)}, mana yang lebih tinggi` } },
-    { label: bi('Late payment fee', 'Fi bayaran lewat'), value: { en: `${money(card?.lateFee.flat ?? R.lateFeeFlat)} or ${card?.lateFee.percent ?? R.lateFeePercent}% of what you owe, whichever is higher`, ms: `${money(card?.lateFee.flat ?? R.lateFeeFlat)} atau ${card?.lateFee.percent ?? R.lateFeePercent}% daripada hutang, mana yang lebih tinggi` } },
-    {
-      label: bi('Annual fee', 'Yuran tahunan'),
-      value: card
-        ? card.annualFee === 0
-          ? { en: 'RM0', ms: 'RM0' }
-          : { en: `${money(card.annualFee)}. ${card.annualFeeWaiver?.en ?? ''}`, ms: `${money(card.annualFee)}. ${card.annualFeeWaiver?.ms ?? ''}` }
-        : { en: `${money(R.annualFeeFirstYear)} in year 1, then ${money(R.annualFeeAfter)}`, ms: `${money(R.annualFeeFirstYear)} pada tahun 1, kemudian ${money(R.annualFeeAfter)}` },
-    },
-    { label: bi('Service tax', 'Cukai perkhidmatan'), value: { en: `${money(R.serviceTaxPerYear)} a year (government tax)`, ms: `${money(R.serviceTaxPerYear)} setahun (cukai kerajaan)` } },
-    { label: bi('Cash advance fee', 'Fi pendahuluan tunai'), value: { en: `${card?.cashAdvance.percent ?? R.cashAdvancePercent}% (at least ${money(card?.cashAdvance.min ?? R.cashAdvanceMin)}). Interest starts at once.`, ms: `${card?.cashAdvance.percent ?? R.cashAdvancePercent}% (sekurang-kurangnya ${money(card?.cashAdvance.min ?? R.cashAdvanceMin)}). Faedah bermula serta-merta.` } },
-    { label: bi('Foreign currency fee', 'Fi mata wang asing'), value: { en: `${card?.fxFeePercent ?? R.fxFeePercent}% on purchases in another currency`, ms: `${card?.fxFeePercent ?? R.fxFeePercent}% untuk pembelian dalam mata wang lain` } },
-    { label: bi('Credit limit', 'Had kredit'), value: { en: `${money(R.limitMin)} to ${money(R.limitMax)}, set after review`, ms: `${money(R.limitMin)} hingga ${money(R.limitMax)}, ditetapkan selepas semakan` } },
-    { label: bi('Decision time', 'Masa keputusan'), value: { en: `In-principle answer now. Final approval ${DECISION_TIME.en}.`, ms: `Jawapan dalam prinsip sekarang. Kelulusan akhir ${DECISION_TIME.ms}.` } },
-  ];
+  const std = (en: string, ms: string): Bi => ({ en, ms });
+  const rows: { label: Bi; value: Bi }[] = card
+    ? [
+        { label: bi('Card', 'Kad'), value: std(`${card.bank} ${card.name}`, `${card.bank} ${card.name}`) },
+        { label: bi('Interest or profit rate', 'Kadar faedah atau keuntungan'), value: card.interest ? { en: `${interestText(card).en} a year, only on what you do not pay by the due date. ${card.interestNote?.en ?? ''}`.trim(), ms: `${interestText(card).ms} setahun, hanya atas yang tidak dibayar sebelum tarikh akhir. ${card.interestNote?.ms ?? ''}`.trim() } : NOT_STATED },
+        { label: bi('Minimum payment', 'Bayaran minimum'), value: minPaymentText(card) },
+        { label: bi('Late payment charge', 'Caj bayaran lewat'), value: lateFeeText(card) },
+        { label: bi('Annual fee', 'Yuran tahunan'), value: card.annualFee === null ? NOT_STATED : card.annualFee === 0 ? std('RM0', 'RM0') : std(`${money(card.annualFee)}. ${card.annualFeeWaiver?.en ?? ''}`.trim(), `${money(card.annualFee)}. ${card.annualFeeWaiver?.ms ?? ''}`.trim()) },
+        { label: bi('Service tax', 'Cukai perkhidmatan'), value: serviceTaxText(card) },
+        { label: bi('Cash advance fee', 'Fi pendahuluan tunai'), value: cashAdvanceText(card) },
+        { label: bi('Foreign currency fee', 'Fi mata wang asing'), value: fxText(card) },
+        { label: bi('Minimum income', 'Pendapatan minimum'), value: incomeText(card) },
+        { label: bi('Decision time', 'Masa keputusan'), value: { en: `In-principle answer now. Final approval ${DECISION_TIME.en}.`, ms: `Jawapan dalam prinsip sekarang. Kelulusan akhir ${DECISION_TIME.ms}.` } },
+      ]
+    : [
+        { label: bi('Card', 'Kad'), value: std('KAF First Card (standard example terms)', 'KAF First Card (terma contoh standard)') },
+        { label: bi('Interest rate', 'Kadar faedah'), value: std(`${R.aprPercent}% a year, only on what you do not pay by the due date`, `${R.aprPercent}% setahun, hanya atas yang tidak dibayar sebelum tarikh akhir`) },
+        { label: bi('Minimum payment', 'Bayaran minimum'), value: std(`${R.minPaymentPercent}% of what you owe or ${money(R.minPaymentFloor)}, whichever is higher`, `${R.minPaymentPercent}% daripada hutang atau ${money(R.minPaymentFloor)}, mana yang lebih tinggi`) },
+        { label: bi('Late payment fee', 'Fi bayaran lewat'), value: std(`${money(R.lateFeeFlat)} or ${R.lateFeePercent}% of what you owe, whichever is higher`, `${money(R.lateFeeFlat)} atau ${R.lateFeePercent}% daripada hutang, mana yang lebih tinggi`) },
+        { label: bi('Annual fee', 'Yuran tahunan'), value: std(`${money(R.annualFeeFirstYear)} in year 1, then ${money(R.annualFeeAfter)}`, `${money(R.annualFeeFirstYear)} pada tahun 1, kemudian ${money(R.annualFeeAfter)}`) },
+        { label: bi('Service tax', 'Cukai perkhidmatan'), value: std(`${money(R.serviceTaxPerYear)} a year (government tax)`, `${money(R.serviceTaxPerYear)} setahun (cukai kerajaan)`) },
+        { label: bi('Cash advance fee', 'Fi pendahuluan tunai'), value: std(`${R.cashAdvancePercent}% (at least ${money(R.cashAdvanceMin)}). Interest starts at once.`, `${R.cashAdvancePercent}% (sekurang-kurangnya ${money(R.cashAdvanceMin)}). Faedah bermula serta-merta.`) },
+        { label: bi('Foreign currency fee', 'Fi mata wang asing'), value: std(`${R.fxFeePercent}% on purchases in another currency`, `${R.fxFeePercent}% untuk pembelian dalam mata wang lain`) },
+        { label: bi('Credit limit', 'Had kredit'), value: std(`${money(R.limitMin)} to ${money(R.limitMax)}, set after review`, `${money(R.limitMin)} hingga ${money(R.limitMax)}, ditetapkan selepas semakan`) },
+        { label: bi('Decision time', 'Masa keputusan'), value: { en: `In-principle answer now. Final approval ${DECISION_TIME.en}.`, ms: `Jawapan dalam prinsip sekarang. Kelulusan akhir ${DECISION_TIME.ms}.` } },
+      ];
   return (
     <Card className="space-y-2">
       <h4 className="text-xl font-extrabold">{t(bi('Every cost, before you submit', 'Setiap kos, sebelum anda hantar'))}</h4>
@@ -397,7 +404,11 @@ export function CostSummary({ card }: { card?: CardRecord }) {
           </div>
         ))}
       </dl>
-      <p className="text-sm text-slate-600">{t(bi('No other fees. Figures are illustrative only, not a real bank offer.', 'Tiada yuran lain. Angka hanya sebagai contoh, bukan tawaran bank sebenar.'))}</p>
+      <p className="text-sm text-slate-600">
+        {card
+          ? t(bi('These come from bank websites and may have changed. Other charges can apply, so read the bank’s product disclosure sheet. This prototype does not send anything to the bank.', 'Ini datang daripada laman web bank dan mungkin telah berubah. Caj lain boleh dikenakan, jadi baca helaian pendedahan produk bank. Prototaip ini tidak menghantar apa-apa kepada bank.'))
+          : t(bi('No other fees. Figures are illustrative only, not a real bank offer.', 'Tiada yuran lain. Angka hanya sebagai contoh, bukan tawaran bank sebenar.'))}
+      </p>
     </Card>
   );
 }
@@ -465,7 +476,7 @@ export function SubmittedView({ submission, onTrack, onNew }: { submission: Subm
       <Callout tone={v.tone} title={t(v.title)}>{t(v.text)}</Callout>
       <Card className="space-y-2">
         <p className="text-sm text-slate-600">{t(bi('Your reference number', 'Nombor rujukan anda'))}</p>
-        <p className="text-3xl font-extrabold tracking-wide">{submission.ref}</p>
+        <p className="text-3xl font-bold tracking-wide">{submission.ref}</p>
         <p className="text-base">{t(bi('Final approval: ', 'Kelulusan akhir: '))}<strong>{t(bi(DECISION_TIME.en, DECISION_TIME.ms))}</strong>.</p>
         <p className="text-base">{t(bi('We will message you. Remember: we never ask for your TAC or password via WhatsApp or call.', 'Kami akan menghantar mesej kepada anda. Ingat: kami tidak pernah meminta TAC atau kata laluan anda melalui WhatsApp atau panggilan.'))}</p>
       </Card>

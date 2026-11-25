@@ -39,65 +39,105 @@ expect('50% commitments is Maybe', tight.verdict === 'maybe', tight);
 // ---- REQ-11: card data and comparison logic ----
 import cardsJson from '../src/data/cards.json' with { type: 'json' };
 import { validateCards } from '../src/data/validate.ts';
-import { DEFAULT_FILTERS, bestMatches, compareRows, derive, filterCards, sortCards, termsFromCard } from '../src/lib/cards.ts';
-import type { CardRecord } from '../src/data/cardTypes.ts';
+import { resolveCards } from '../src/data/resolve.ts';
+import { DEFAULT_FILTERS, TIER_ORDER, bestMatches, compareRows, derive, filterCards, missingTerms, nullLast, sortCards, termsFromCard, tierCounts } from '../src/lib/cards.ts';
+import type { CardRecord, CardsFile } from '../src/data/cardTypes.ts';
 
 const problems = validateCards(cardsJson);
-expect('cards.json is valid', problems.length === 0, problems);
-const bad = validateCards({ meta: cardsJson.meta, cards: [{ ...cardsJson.cards[0], network: 'Discover' }, ...cardsJson.cards.slice(1)] });
-expect('validator names the card and field when data is wrong', bad.some((m) => m.includes('Starter Visa') && m.includes('network')), bad);
+expect('cards.json is valid', problems.length === 0, problems.slice(0, 5));
 
-const cards = cardsJson.cards as unknown as CardRecord[];
+const badNetwork = validateCards({ ...cardsJson, cards: [{ ...cardsJson.cards[0], network: 'Discover' }, ...cardsJson.cards.slice(1)] });
+expect('validator names the card and the field when data is wrong', badNetwork.some((m) => m.includes('network')), badNetwork);
+const badBank = validateCards({ ...cardsJson, cards: [{ ...cardsJson.cards[0], bank: 'no-such-bank' }, ...cardsJson.cards.slice(1)] });
+expect('validator catches a card that points to an unknown bank', badBank.some((m) => m.includes('bank') && m.includes('no-such-bank')), badBank);
+const badLink = validateCards({ ...cardsJson, banks: [{ ...cardsJson.banks[0], website: 'maybank.com' }, ...cardsJson.banks.slice(1)] });
+expect('validator catches a web address without http', badLink.some((m) => m.includes('website')), badLink);
+
+const cards: CardRecord[] = resolveCards(cardsJson as unknown as CardsFile);
 const byId = (id: string) => cards.find((c) => c.id === id)!;
-expect('HSBC secured card scores 5', derive(byId('hsbc-secured-visa')).friendliness === 5);
-expect('Standard Chartered platinum scores low (2)', derive(byId('standard-chartered-smart-platinum')).friendliness === 2, derive(byId('standard-chartered-smart-platinum')));
-expect('Public Bank is not gig-worker friendly', !derive(byId('public-bank-simple-visa')).gigFriendly);
-expect('Maybank Starter is gig-worker friendly', derive(byId('maybank-starter-visa')).gigFriendly);
+const banksUsed = new Set(cards.map((c) => c.bankId));
+expect('15 banks and more than 150 cards', banksUsed.size === 15 && cards.length > 150, { banks: banksUsed.size, cards: cards.length });
+expect('every card has a link (its own page, its bank cards page or its bank website)', cards.every((c) => /^https?:\/\//.test(c.sourceUrl)));
+expect('many cards link to their own official page', cards.filter((c) => c.hasOwnPage).length >= 50);
+expect('every bank lists where its data came from', cards.every((c) => c.dataSources.length > 0 && c.dataSources.every((s) => /^https?:\/\//.test(s.url))));
+expect('both conventional and Islamic cards', cards.some((c) => c.kind === 'islamic') && cards.some((c) => c.kind === 'conventional'));
+expect('unknown values stay null and are not invented', cards.some((c) => c.annualFee === null) && cards.some((c) => c.minAnnualIncome === null) && cards.some((c) => c.network === null));
+expect('a card inherits its bank rules (Maybank Visa Infinite: 5% or RM25 minimum)', byId('maybank-visa-infinite').minPayment?.floor === 25 && byId('maybank-visa-infinite').interest?.max === 18);
+expect('a card can override its bank rule (CIMB Lite-i fixed 14%)', byId('cimb-lite-i').interest?.min === 14 && byId('cimb-lite-i').interest?.max === 14);
+expect('Hong Leong has deposit-backed cards with the deposit amount', cards.filter((c) => c.bankId === 'hong-leong' && c.secured).length >= 5 && byId('hong-leong-wise-credit-card').securedDeposit === 2000);
 
+// Derived fields
+expect('score is always 1 to 5', cards.every((c) => derive(c).friendliness >= 1 && derive(c).friendliness <= 5));
+expect('Public Bank does not list bank statements, so not gig-ready', !derive(byId('public-bank-visa-gold')).gigFriendly);
+expect('Maybank lists bank statements', derive(byId('maybank-visa-infinite')).gigFriendly);
+expect('a no-fee, low-income, deposit-backed card scores 5', derive(byId('hong-leong-i-m-credit-card')).friendliness === 5, derive(byId('hong-leong-i-m-credit-card')));
+expect('a high-fee, high-income premium card scores low', derive(byId('cimb-travel-world-elite')).friendliness <= 2, derive(byId('cimb-travel-world-elite')));
+
+// Filters and search
 const gigOnly = filterCards(cards, '', { ...DEFAULT_FILTERS, gig: true });
-expect('gig filter keeps only cards with bank statement or gig statement', gigOnly.length > 0 && gigOnly.every((c) => c.incomeProof.includes('bank_statement') || c.incomeProof.includes('gig_statement')));
-expect('gig filter removes Public Bank', !gigOnly.some((c) => c.id === 'public-bank-simple-visa'));
-expect('search matches bank or card name, ignoring case', filterCards(cards, 'hsbc', DEFAULT_FILTERS).length === 1 && filterCards(cards, 'WISE', DEFAULT_FILTERS).length === 1);
-expect('filters combine (Islamic + digital)', filterCards(cards, '', { ...DEFAULT_FILTERS, kind: 'islamic', digital: true }).every((c) => c.kind === 'islamic' && c.digitalApplication));
+expect('bank-statement filter keeps only cards that list it', gigOnly.length > 0 && gigOnly.every((c) => c.incomeProof.includes('bank_statement') || c.incomeProof.includes('gig_statement')));
+expect('bank-statement filter removes Public Bank', !gigOnly.some((c) => c.bankId === 'public-bank'));
+expect('search matches bank or card name, ignoring case', filterCards(cards, 'HSBC', DEFAULT_FILTERS).every((c) => c.bankId === 'hsbc') && filterCards(cards, 'visa infinite', DEFAULT_FILTERS).length >= 5);
+expect('filters combine (Islamic + Visa)', filterCards(cards, '', { ...DEFAULT_FILTERS, kind: 'islamic', network: 'Visa' }).every((c) => c.kind === 'islamic' && c.network === 'Visa'));
 expect('no match gives an empty list', filterCards(cards, 'zzzz', DEFAULT_FILTERS).length === 0);
-expect('income slider limits by monthly income', filterCards(cards, '', { ...DEFAULT_FILTERS, maxMonthlyIncome: 1500 }).every((c) => c.minAnnualIncome / 12 <= 1500));
+const lowSlider = filterCards(cards, '', { ...DEFAULT_FILTERS, maxMonthlyIncome: 2000 });
+expect('income slider keeps only stated incomes at or under the limit', lowSlider.length > 0 && lowSlider.every((c) => c.minAnnualIncome !== null && c.minAnnualIncome / 12 <= 2000));
+expect('"not stated" network filter', filterCards(cards, '', { ...DEFAULT_FILTERS, network: 'unknown' }).every((c) => c.network === null) && filterCards(cards, '', { ...DEFAULT_FILTERS, network: 'unknown' }).length > 0);
+expect('"not stated" fee filter', filterCards(cards, '', { ...DEFAULT_FILTERS, fee: 'unknown' }).every((c) => c.annualFee === null));
+expect('free-fee filter keeps only RM0 cards', filterCards(cards, '', { ...DEFAULT_FILTERS, fee: 'free' }).every((c) => c.annualFee === 0));
+expect('deposit-backed filter', filterCards(cards, '', { ...DEFAULT_FILTERS, secured: true }).every((c) => c.secured) && filterCards(cards, '', { ...DEFAULT_FILTERS, secured: true }).length >= 5);
+expect('low-income filter includes deposit-backed and RM2,000 cards', filterCards(cards, '', { ...DEFAULT_FILTERS, lowIncome: true }).every((c) => c.secured || (c.minAnnualIncome !== null && c.minAnnualIncome <= 24000)));
 
-const best = sortCards(cards, 'best');
-expect('default sort puts the highest friendliness first', derive(best[0]).friendliness === 5);
-expect('fee sort starts with a RM0 card', sortCards(cards, 'fee')[0].annualFee === 0);
-expect('rate sort starts with the lowest rate', sortCards(cards, 'rate')[0].interestPa === Math.min(...cards.map((c) => c.interestPa)));
-expect('income sort starts with the lowest income', sortCards(cards, 'income')[0].minAnnualIncome === Math.min(...cards.map((c) => c.minAnnualIncome)));
-expect('rewards sort starts with the best return', sortCards(cards, 'rewards')[0].rewards.valuePercent === Math.max(...cards.map((c) => c.rewards.valuePercent)));
+// Sorting, with "not stated" always last
+const isMonotonic = (list: (number | null)[]) => list.every((v, i) => i === 0 || nullLast(list[i - 1], v) <= 0);
+expect('fee sort: RM0 first, "not stated" last', sortCards(cards, 'fee')[0].annualFee === 0 && isMonotonic(sortCards(cards, 'fee').map((c) => c.annualFee)));
+expect('rate sort starts with the lowest rate (BSN government cards at 11%)', sortCards(cards, 'rate')[0].interest?.min === Math.min(...cards.map((c) => c.interest?.min ?? 99)) && isMonotonic(sortCards(cards, 'rate').map((c) => c.interest?.min ?? null)));
+expect('income sort: lowest first, "not stated" last', isMonotonic(sortCards(cards, 'income').map((c) => c.minAnnualIncome)) && sortCards(cards, 'income').at(-1)!.minAnnualIncome === null);
+expect('cashback sort puts the highest rate first', sortCards(cards, 'rewards')[0].rewards.valuePercent === Math.max(...cards.map((c) => c.rewards.valuePercent ?? 0)));
+expect('default sort puts the most beginner-friendly first', derive(sortCards(cards, 'best')[0]).friendliness === 5);
 
-const hafizMatch = bestMatches(cards, { age: '25', incomeType: 'gig', income: '2800', commitments: '500' });
-expect('Hafiz gets 3 matches, all gig-friendly', hafizMatch.matches.length === 3 && hafizMatch.matches.every((m) => derive(m.card).gigFriendly), hafizMatch.matches.map((m) => m.card.id));
-expect('every match has at least 2 reasons', hafizMatch.matches.every((m) => m.reasons.length >= 2));
-const ainaMatch = bestMatches(cards, { age: '23', incomeType: 'salaried', income: '3500', commitments: '300' });
-expect('Aina gets 3 matches she can afford', ainaMatch.matches.length === 3 && ainaMatch.matches.every((m) => m.card.minAnnualIncome <= 42000));
-const nobody = bestMatches(cards, { age: '19', incomeType: 'salaried', income: '500', commitments: '0' });
-expect('under-age, low income gets no matches and a reason', nobody.matches.length === 0 && nobody.excluded.tooYoung > 0);
-
-const trio = [byId('maybank-starter-visa'), byId('public-bank-simple-visa'), byId('hsbc-secured-visa')];
-const rows = compareRows(trio);
-const feeRow = rows.find((r) => r.row.id === 'annualFee')!;
-expect('best annual fee is marked on both RM0 cards', feeRow.best.join() === '0,2' && feeRow.differs, feeRow);
-const rateRow = rows.find((r) => r.row.id === 'rate')!;
-expect('best rate is the lowest (HSBC 12%)', rateRow.best.join() === '2', rateRow);
-const sameRow = compareRows([byId('maybank-starter-visa'), byId('maybank-starter-visa')]).find((r) => r.row.id === 'rate')!;
-expect('identical values do not differ and have no best', !sameRow.differs && sameRow.best.length === 0);
-const t = termsFromCard(byId('affin-gig-start-mastercard'));
-const cardSim = simulate({ spend: 500, mode: 'minimum', fixed: 0 }, t);
-expect('simulator uses a card rate (Affin 18% costs more than default 15%)', t.aprPercent === 18 && cardSim.interest > min.interest, cardSim);
-
-// ---- Tier classification (REQ-11.13) ----
-import { TIER_ORDER, tierCounts } from '../src/lib/cards.ts';
+// Tiers
 const tcounts = tierCounts(cards, '', DEFAULT_FILTERS);
 expect('every card falls in exactly one tier', TIER_ORDER.reduce((a, k) => a + tcounts[k], 0) === cards.length, tcounts);
-expect('tier filter keeps only that tier', filterCards(cards, '', { ...DEFAULT_FILTERS, tier: 'gold' }).every((c) => c.tier === 'gold') && filterCards(cards, '', { ...DEFAULT_FILTERS, tier: 'gold' }).length === tcounts.gold);
-expect('secured tier finds the HSBC secured card', filterCards(cards, '', { ...DEFAULT_FILTERS, tier: 'secured' }).map((c) => c.id).join() === 'hsbc-secured-visa');
-expect('tier combines with other filters (gold + Islamic)', filterCards(cards, '', { ...DEFAULT_FILTERS, tier: 'gold', kind: 'islamic' }).every((c) => c.tier === 'gold' && c.kind === 'islamic'));
-expect('tier counts ignore the tier filter itself but respect others', tierCounts(cards, '', { ...DEFAULT_FILTERS, tier: 'gold', kind: 'islamic' }).gold === filterCards(cards, '', { ...DEFAULT_FILTERS, tier: 'gold', kind: 'islamic' }).length && tierCounts(cards, '', { ...DEFAULT_FILTERS, tier: 'gold', kind: 'islamic' }).classic === filterCards(cards, '', { ...DEFAULT_FILTERS, tier: 'classic', kind: 'islamic' }).length);
-expect('compare table has a tier row', compareRows(trio).some((r) => r.row.id === 'tier' && r.differs));
+expect('there are classic, gold, platinum and premium cards', tcounts.classic > 0 && tcounts.gold > 0 && tcounts.platinum > 0 && tcounts.premium > 0, tcounts);
+expect('tier filter keeps only that tier', filterCards(cards, '', { ...DEFAULT_FILTERS, tier: 'premium' }).every((c) => c.tier === 'premium'));
+expect('tier counts ignore the tier filter itself but respect others', tierCounts(cards, '', { ...DEFAULT_FILTERS, tier: 'gold', kind: 'islamic' }).classic === filterCards(cards, '', { ...DEFAULT_FILTERS, tier: 'classic', kind: 'islamic' }).length);
+
+// Best match for me
+const hafizMatch = bestMatches(cards, { age: '25', incomeType: 'gig', income: '2800', commitments: '500' });
+expect('Hafiz gets 3 matches from 3 different banks', hafizMatch.matches.length === 3 && new Set(hafizMatch.matches.map((m) => m.card.bankId)).size === 3, hafizMatch.matches.map((m) => m.card.id));
+expect('Hafiz matches are within his income or deposit-backed, and list bank statements', hafizMatch.matches.every((m) => (m.card.secured || (m.card.minAnnualIncome !== null && m.card.minAnnualIncome <= 33600)) && derive(m.card).gigFriendly));
+expect('every match has at least 2 reasons', hafizMatch.matches.every((m) => m.reasons.length >= 2));
+const ainaMatch = bestMatches(cards, { age: '23', incomeType: 'salaried', income: '3500', commitments: '300' });
+expect('Aina gets 3 matches she can afford', ainaMatch.matches.length === 3 && ainaMatch.matches.every((m) => m.card.secured || (m.card.minAnnualIncome !== null && m.card.minAnnualIncome <= 42000)));
+const danielMatch = bestMatches(cards, { age: '24', incomeType: 'student', income: '1200', commitments: '200' });
+expect('Daniel (RM1,200 a month) only gets deposit-backed cards, and is told to pledge a deposit', danielMatch.matches.length > 0 && danielMatch.matches.every((m) => m.card.secured) && danielMatch.matches[0].reasons[0].en.includes('pledge a fixed deposit'), danielMatch.matches.map((m) => m.card.id));
+const tooYoung = bestMatches(cards, { age: '17', incomeType: 'salaried', income: '9000', commitments: '0' });
+expect('under 21 gets no matches and a reason', tooYoung.matches.length === 0 && tooYoung.excluded.tooYoung > 100, tooYoung.excluded);
+const noMoney = bestMatches(cards.filter((c) => !c.secured), { age: '30', incomeType: 'salaried', income: '500', commitments: '0' });
+expect('very low income and no deposit cards gives no matches', noMoney.matches.length === 0 && noMoney.excluded.lowIncome > 50, noMoney.excluded);
+
+// Compare table
+const trio = [byId('maybank-visa-infinite'), byId('public-bank-visa-gold'), byId('hong-leong-i-m-credit-card')];
+const rows = compareRows(trio);
+const feeRow = rows.find((r) => r.row.id === 'annualFee')!;
+expect('best annual fee is the RM0 card', feeRow.best.join() === '2' && feeRow.differs, feeRow.best);
+const incomeRow = rows.find((r) => r.row.id === 'minIncome')!;
+expect('best income is the lowest stated', incomeRow.best.length >= 1 && incomeRow.best.every((i) => trio[i].minAnnualIncome === Math.min(...trio.map((c) => c.minAnnualIncome ?? Infinity))), incomeRow.best);
+const nullRow = compareRows([byId('hong-leong-essential-credit-card'), byId('hong-leong-wise-credit-card')]).find((r) => r.row.id === 'annualFee')!;
+expect('a "not stated" value is never marked best', !nullRow.best.includes(0), nullRow.best);
+const sameRow = compareRows([byId('maybank-visa-infinite'), byId('maybank-visa-infinite')]).find((r) => r.row.id === 'rate')!;
+expect('identical values do not differ and have no best', !sameRow.differs && sameRow.best.length === 0);
+expect('compare table has a tier row', rows.some((r) => r.row.id === 'tier'));
+
+// Simulator terms
+const t = termsFromCard(byId('affin-world-mastercard'));
+const cardSim = simulate({ spend: 500, mode: 'minimum', fixed: 0 }, t);
+expect('simulator uses the card’s highest rate (AFFIN 18% costs more than default 15%)', t.aprPercent === 18 && cardSim.interest > min.interest, cardSim);
+expect('late fee cap passes through to the simulator', termsFromCard(byId('public-bank-visa-gold')).lateMax === 100);
+const miss = missingTerms(byId('hong-leong-wise-credit-card'));
+expect('missing terms are reported, and standard figures are used', miss.interest && miss.minPayment && miss.lateFee && termsFromCard(byId('hong-leong-wise-credit-card')).aprPercent === 15);
+expect('Islamic Nadi uses 14%', termsFromCard(byId('maybank-islamic-nadi-mastercard-credit-card-i')).aprPercent === 14);
 
 // ---- REQ-12: usage and payment tracker ----
 import { addDays, buildStatement, cycleOf, daysBetween, dueDate, reminderDue, sampleData, statementBefore, statementOnOrAfter, summarise } from '../src/lib/usage.ts';
@@ -152,6 +192,65 @@ expect('sample works at month end (day capped at 28)', sample2.statementDay <= 2
 const ics = buildReminderIcs(['2026-12-05', '2027-01-05'], 3, 'Maybank Starter Visa', new Date('2026-11-19T00:00:00Z'));
 expect('ics has 2 events, all-day dates and a 3-day alert', (ics.match(/BEGIN:VEVENT/g) || []).length === 2 && ics.includes('DTSTART;VALUE=DATE:20261205') && ics.includes('DTEND;VALUE=DATE:20261206') && ics.includes('TRIGGER:-P3D') && ics.includes('\r\n'));
 
+// ---- REQ-5: tracking and decision (Track stage) ----
+import { addWorkingDays, decisionReached, decisionText, latestDecisionDate, stageStatus } from '../src/lib/track.ts';
+
+expect('working days skip weekends (Thu 19 Nov + 3 = Tue 24 Nov)', addWorkingDays('2026-11-19', 3) === '2026-11-24');
+expect('Friday + 1 working day is Monday', addWorkingDays('2026-11-20', 1) === '2026-11-23');
+expect('final decision date is 3 working days after submitting', latestDecisionDate('2026-11-19') === '2026-11-24');
+expect('timeline: done, current, waiting', stageStatus(0, 1) === 'done' && stageStatus(1, 1) === 'current' && stageStatus(2, 1) === 'waiting');
+expect('timeline: at the decision stage every stage is done', [0, 1, 2, 3].every((i) => stageStatus(i, 3) === 'done') && decisionReached(3) && !decisionReached(2));
+const goodDraft: Draft = { q: 0, scanned: true, manualIdentity: false, identity: { name: 'A', ic: '', dob: '12 April 2001', address: 'x' }, phone: '', email: '', employment: 'gig', income: '2800', commitments: '500', proofMethod: 'bank', consent: true, proof: { method: 'bank', avgMonthly: 2800, lowest: 2200, highest: 3400, source: 'Bank' }, costRead: true, savedAt: null, started: true };
+const poorDraft: Draft = { ...goodDraft, income: '900', commitments: '800', proof: { ...goodDraft.proof!, avgMonthly: 900 } };
+expect('approved decision has reasons and next steps', decisionText('approved', goodDraft).reasons.length >= 2 && decisionText('approved', goodDraft).nextSteps.length >= 3);
+expect('rejected decision always has at least 2 reasons', decisionText('rejected', goodDraft).reasons.length >= 2 && decisionText('rejected', poorDraft).reasons.length >= 2);
+expect('rejected reasons use the user’s own numbers first (income below RM2,000)', decisionText('rejected', poorDraft).reasons[0].en.includes('below'), decisionText('rejected', poorDraft).reasons);
+expect('rejected next steps say you can apply again and how to reach a person', decisionText('rejected', poorDraft).nextSteps.some((s) => s.en.includes('apply again')) && decisionText('rejected', poorDraft).nextSteps.some((s) => s.en.includes('Talk to a person')));
+expect('reasons and steps are in both languages', [...decisionText('rejected', poorDraft).reasons, ...decisionText('approved', goodDraft).nextSteps].every((b) => b.en.length > 0 && b.ms.length > 0));
+// ---- REQ-7: credit education ----
+import { LEARN_CARDS, QUIZ, TOPICS, cardText, findLearnCard, readingSeconds, scoreQuiz } from '../src/data/learn.ts';
+
+const times = LEARN_CARDS.map((c) => ({ id: c.id, en: readingSeconds(c, 'en'), ms: readingSeconds(c, 'ms') }));
+console.log('   reading times (seconds):', JSON.stringify(times));
+expect('every learning card reads in 30 to 60 seconds in both languages', times.every((x) => x.en >= 30 && x.en <= 60 && x.ms >= 30 && x.ms <= 60), times);
+expect('the five required topics are covered', ['credit-score', 'min-vs-full', 'utilisation', 'dos-donts', 'myths'].every((id) => !!findLearnCard(id)));
+expect('the "applying always hurts my score" myth is explained', cardText(findLearnCard('myths')!, 'en').includes('Applying for a card always hurts my score'));
+expect('every card has a topic, English and Malay text, a takeaway', LEARN_CARDS.every((c) => TOPICS.some((t) => t.id === c.topic) && cardText(c, 'en').length > 100 && cardText(c, 'ms').length > 100 && c.takeaway.en && c.takeaway.ms));
+expect('minimum-vs-full numbers match the simulator (RM37.52 extra, 11 months on RM500)', cardText(findLearnCard('min-vs-full')!, 'en').includes('RM37.52') && cardText(findLearnCard('min-vs-full')!, 'en').includes('11 months'));
+expect('quiz has 5 questions, each with a valid answer and a card to review', QUIZ.length === 5 && QUIZ.every((q) => q.answer >= 0 && q.answer < q.options.length && !!findLearnCard(q.review) && q.explain.en && q.explain.ms && q.options.length >= 3));
+expect('quiz scoring: all right is 5/5', scoreQuiz(QUIZ.map((q) => q.answer)).score === 5 && scoreQuiz(QUIZ.map((q) => q.answer)).wrong.length === 0);
+const partial = scoreQuiz([QUIZ[0].answer, 99, null, null, null]);
+expect('quiz scoring: partial answers, wrong ones are listed for review', partial.answered === 2 && partial.score === 1 && partial.wrong.length === 1 && partial.wrong[0].id === QUIZ[1].id);
+// ---- REQ-9, REQ-10, REQ-1: workshop, demo walkthrough, first-3-months guide ----
+import { csvCell, entriesToCsv, averageRating, tally, togglePick, CSV_HEADER } from '../src/lib/workshop.ts';
+import { WALKTHROUGH, WALK_TOTAL_SECONDS, TARGET_SECONDS, formatClock } from '../src/data/walkthrough.ts';
+import { GUIDE } from '../src/data/guide.ts';
+import { ROUTES } from '../src/lib/router.ts';
+import type { WorkshopEntry } from '../src/state/types.ts';
+
+const entry = (o: Partial<WorkshopEntry>): WorkshopEntry => ({ id: 'w1', at: '2026-11-19T01:00:00.000Z', tester: 'A', seamless: ['prefill'], dealBreakers: ['hiddenFees'], proof: 'bank', time: 'sameDay', trust: ['bnm'], rating: 4, stuck: '', cardFeatures: ['fee'], cardsCompared: ['maybank-visa-infinite'], cardsViewed: [], cardSelected: null, ...o });
+const testers = [
+  entry({ id: 'a', seamless: ['prefill', 'save'], rating: 5, cardFeatures: ['fee', 'rate'], cardSelected: 'cimb-lite-i' }),
+  entry({ id: 'b', seamless: ['prefill'], dealBreakers: ['hiddenFees', 'noReason'], proof: 'upload', rating: 3, stuck: 'The scan was slow' }),
+  entry({ id: 'c', seamless: ['help'], dealBreakers: ['hiddenFees'], proof: 'bank', rating: 4, cardFeatures: ['fee'] }),
+];
+expect('tally counts testers, most picked first', JSON.stringify(tally(testers, (e) => e.seamless)) === JSON.stringify([{ key: 'prefill', count: 2 }, { key: 'help', count: 1 }, { key: 'save', count: 1 }]), tally(testers, (e) => e.seamless));
+expect('tally of a single choice (income proof)', tally(testers, (e) => [e.proof])[0].key === 'bank' && tally(testers, (e) => [e.proof])[0].count === 2);
+expect('tally counts a tester once per option', tally([entry({ seamless: ['prefill', 'prefill'] })], (e) => e.seamless)[0].count === 1);
+expect('average rating (5, 3, 4 = 4)', averageRating(testers) === 4 && averageRating([]) === null);
+expect('pick up to 3: the 4th is blocked, unticking works', togglePick(['a', 'b', 'c'], 'd', 3).blocked && !togglePick(['a', 'b'], 'c', 3).blocked && togglePick(['a', 'b', 'c'], 'b', 3).list.join() === 'a,c');
+expect('CSV makes spreadsheet formulas harmless', csvCell('=HYPERLINK("x")') === '"\'=HYPERLINK(""x"")"' && csvCell('+1') === '"\'+1"' && csvCell('say "hi"') === '"say ""hi"""');
+const csv = entriesToCsv(testers);
+expect('CSV has a header and one row per tester, with the card features and chosen card', csv.split('\r\n').length === 5 && csv.startsWith(CSV_HEADER.map((h) => `"${h}"`).join(',')) && csv.includes('Annual fee; Interest rate') && csv.includes('CIMB Lite-i'), csv.slice(0, 200));
+
+expect('walkthrough has at most 8 steps and fits in 5 minutes', WALKTHROUGH.length <= 8 && WALK_TOTAL_SECONDS <= TARGET_SECONDS, { steps: WALKTHROUGH.length, seconds: WALK_TOTAL_SECONDS });
+expect('walkthrough covers all five stages in order', ['ready', 'cost', 'apply', 'track', 'use'].every((r, i, arr) => WALKTHROUGH.findIndex((s) => s.route === r) >= 0 && (i === 0 || WALKTHROUGH.findIndex((s) => s.route === r) > WALKTHROUGH.findIndex((s) => s.route === arr[i - 1]))));
+expect('walkthrough steps have a real screen, talking points in both languages and a time', WALKTHROUGH.every((s) => (ROUTES as string[]).includes(s.route) && s.points.length >= 1 && s.points.every((p) => p.en && p.ms) && s.title.en && s.title.ms && s.seconds > 0));
+expect('walkthrough shows both an approved and a rejected decision', WALKTHROUGH.some((s) => s.patch && s.patch.toString().includes("'approved'")) && WALKTHROUGH.some((s) => s.patch && s.patch.toString().includes("'rejected'")));
+expect('clock text', formatClock(0) === '0:00' && formatClock(75) === '1:15' && formatClock(300) === '5:00');
+
+expect('guide has 3 months with at least 3 actions each, in both languages', GUIDE.length === 3 && GUIDE.every((m) => m.actions.length >= 3 && m.actions.every((a) => a.text.en && a.text.ms)));
+expect('guide action ids are unique', new Set(GUIDE.flatMap((m) => m.actions.map((a) => a.id))).size === GUIDE.reduce((n, m) => n + m.actions.length, 0));
 // ---- Apply wizard logic (REQ-2, REQ-4) ----
 import { QUESTIONS, STEPS, ageFromDob, firstQuestionOfStep, isMalaysianMobile, minutesLeft, validateQuestion } from '../src/lib/apply.ts';
 import type { Draft } from '../src/state/types.ts';

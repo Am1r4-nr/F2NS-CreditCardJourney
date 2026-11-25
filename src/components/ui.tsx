@@ -6,34 +6,34 @@ type Variant = 'primary' | 'secondary' | 'ghost';
 
 export function Button({ variant = 'primary', className = '', ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
   const styles: Record<Variant, string> = {
-    primary: 'bg-cyan-700 text-white hover:bg-cyan-800 disabled:bg-slate-400',
-    secondary: 'bg-white text-cyan-800 border-2 border-cyan-700 hover:bg-cyan-50 disabled:opacity-50',
-    ghost: 'bg-transparent text-cyan-800 hover:bg-cyan-50 underline-offset-2',
+    primary: 'rounded-xl bg-cyan-700 text-white hover:bg-cyan-800 disabled:bg-slate-400',
+    secondary: 'rounded-full border-[1.5px] border-cyan-700 bg-white/40 text-cyan-800 hover:bg-white disabled:opacity-50',
+    ghost: 'rounded-xl bg-transparent text-cyan-800 hover:bg-white/60 underline-offset-2',
   };
   return (
     <button
       type="button"
       {...p}
-      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed ${styles[variant]} ${className}`}
+      className={`inline-flex min-h-12 items-center justify-center gap-2 px-6 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed ${styles[variant]} ${className}`}
     />
   );
 }
 
 export function LinkButton({ href, children, variant = 'primary', className = '' }: { href: string; children: ReactNode; variant?: Variant; className?: string }) {
   const styles: Record<Variant, string> = {
-    primary: 'bg-cyan-700 text-white hover:bg-cyan-800',
-    secondary: 'bg-white text-cyan-800 border-2 border-cyan-700 hover:bg-cyan-50',
-    ghost: 'text-cyan-800 hover:bg-cyan-50',
+    primary: 'rounded-xl bg-cyan-700 text-white hover:bg-cyan-800',
+    secondary: 'rounded-full border-[1.5px] border-cyan-700 bg-white/40 text-cyan-800 hover:bg-white',
+    ghost: 'rounded-xl text-cyan-800 hover:bg-white/60',
   };
   return (
-    <a href={href} className={`inline-flex min-h-12 items-center justify-center rounded-xl px-5 py-3 text-base font-semibold ${styles[variant]} ${className}`}>
+    <a href={href} className={`inline-flex min-h-12 items-center justify-center px-6 py-3 text-base font-semibold ${styles[variant]} ${className}`}>
       {children}
     </a>
   );
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 ${className}`}>{children}</div>;
+  return <div className={`rounded-3xl border border-white/80 bg-white/80 p-5 shadow-[0_8px_30px_rgba(31,37,99,0.06)] backdrop-blur-sm sm:p-6 ${className}`}>{children}</div>;
 }
 
 type Tone = 'info' | 'good' | 'warn' | 'bad';

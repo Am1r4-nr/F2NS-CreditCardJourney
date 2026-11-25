@@ -127,7 +127,7 @@ export function ReadyPage() {
               </h2>
               <p className="text-lg">{t(VERDICT[result.verdict].line)}</p>
               <div>
-                <h3 className="mb-2 text-lg font-bold">{t(bi('Why', 'Sebabnya'))}</h3>
+                <h3 className="mb-2 text-lg font-extrabold">{t(bi('Why', 'Sebabnya'))}</h3>
                 <ul className="space-y-2">
                   {result.reasons.map((r, i) => (
                     <li key={i} className="flex gap-2 text-base">
@@ -139,7 +139,7 @@ export function ReadyPage() {
               </div>
               {result.verdict === 'notyet' && (
                 <div className="rounded-2xl bg-slate-50 p-4">
-                  <h3 className="mb-2 text-lg font-bold">{t(bi('How to qualify', 'Cara untuk layak'))}</h3>
+                  <h3 className="mb-2 text-lg font-extrabold">{t(bi('How to qualify', 'Cara untuk layak'))}</h3>
                   <ol className="list-decimal space-y-2 pl-5">
                     {result.plan.map((p, i) => <li key={i}>{t(p)}</li>)}
                   </ol>

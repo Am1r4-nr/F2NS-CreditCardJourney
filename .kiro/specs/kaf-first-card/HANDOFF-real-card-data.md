@@ -1,3 +1,9 @@
+# STATUS: DONE on 19 Nov 2026 (second session)
+
+All the "To do" steps below were completed. The app type checks and builds, and 110 logic checks pass. A browser-like test of the compare hub, detail drawer, filters, the 3-card limit, language switch, best match and the simulator with a chosen card also passed. Open items are in tasks.md item 52.
+
+---
+
 # Handoff: replace sample cards with real Malaysian card data
 
 Written 19 Nov 2026. Read this first when you continue.

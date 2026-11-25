@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { RATES, SIM_LIMITS } from '../config/rates.ts';
 import type { AppState, CompareState, Draft, Outcome } from './types.ts';
 import { DEFAULT_FILTERS } from '../lib/cards.ts';
+import { CARDS } from '../data/cards.ts';
 import { HAFIZ_CONTACT, MOCK_IDENTITY, PERSONAS } from './personas.ts';
 
 const KEY = 'kaf-first-card-v1';
@@ -57,12 +58,24 @@ function load(): AppState {
     const raw = localStorage.getItem(KEY);
     if (!raw) return base;
     const parsed = JSON.parse(raw) as Partial<AppState>;
+    const known = new Set(CARDS.map((c) => c.id));
+    const keep = (ids: unknown): string[] => (Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string' && known.has(x)) : []);
+    // Filters saved by an older version of the page (they had a digital key) are dropped.
+    const oldFilters = parsed.compare?.filters && 'digital' in (parsed.compare.filters as object);
+    const compare = {
+      ...base.compare,
+      ...parsed.compare,
+      filters: oldFilters ? base.compare.filters : { ...base.compare.filters, ...parsed.compare?.filters },
+      selected: keep(parsed.compare?.selected).slice(0, 3),
+      log: { compared: keep(parsed.compare?.log?.compared), viewed: keep(parsed.compare?.log?.viewed) },
+    };
     return {
       ...base,
       ...parsed,
       draft: { ...base.draft, ...parsed.draft },
       use: { ...base.use, ...parsed.use },
-      compare: { ...base.compare, ...parsed.compare, filters: { ...base.compare.filters, ...parsed.compare?.filters }, log: { ...base.compare.log, ...parsed.compare?.log } },
+      compare,
+      selectedCardId: parsed.selectedCardId && known.has(parsed.selectedCardId) ? parsed.selectedCardId : null,
       done: { ...base.done, ...parsed.done },
     };
   } catch {

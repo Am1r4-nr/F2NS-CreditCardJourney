@@ -420,3 +420,36 @@ src/components/usage.tsx   PayByCard, PayOptions, UsageMeter, SpendForm, SpendLi
 - TierTag component shows symbol + label + tier on tiles, in the detail header and in the compare table header.
 - The hub shows tier buttons (ria-pressed) above search, and a Card tier drop-down in the filter panel. Both set the same filter.
 - A 	ier row in COMPARE_ROWS (group Eligibility, kind text) shows the label and description.
+
+---
+
+# REQ-11 update: real card data (replaces the sample-data model above)
+
+## Data file
+
+`src/data/cards.json` is `{ meta, banks[], cards[] }`. Types are in `src/data/cardTypes.ts`: `RawBank`, `RawCard` (the file) and `CardRecord` (a card joined with its bank by `src/data/resolve.ts`). A card's own value wins over its bank's. Unknown values are `null` and shown as "Not stated. Ask the bank".
+
+- 15 banks and about 170 personal cards on 19 Nov 2026, 47 Islamic and 8 deposit-backed.
+- Each bank has `sources[]` (where the numbers came from), `website`, and where known `cardsUrl`, `feesUrl`, `pdsUrl`. A card has `sourceUrl` (its own page) or null. The detail view falls back to the bank's cards page, then its website.
+- Confidence: Maybank, CIMB, RHB, AmBank, UOB, HSBC, Alliance, AFFIN, OCBC and Public Bank come from dated RinggitPlus pages. Hong Leong, Standard Chartered, Bank Islam, BSN and Bank Rakyat come from undated pages, with some details checked on bank pages (Hong Leong secured cards, Bank Islam fee sheet, BSN product sheets, OCBC Titanium).
+- `scripts/cards-gen/` holds the per-bank source files and `build.mjs`, which writes `cards.json`. The JSON can also be edited by hand. `npm run check:logic` validates it.
+
+## Scoring (updated)
+
+Four criteria, up to 1 point each: income (≤RM24,000 a year: 1, ≤RM36,000: 0.5), proof (3 or more kinds: 1, 2: 0.5), fee (RM0: 1; waivable and fee ≤RM200: 0.7; waivable above RM200: 0.3; no waiver and ≤RM100: 0.4), deposit-backed (1). Score = clamp(round(1 + sum), 1, 5). Null earns 0. The "digital application" criterion was removed because banks do not publish it.
+
+## Filters (updated)
+
+`Filters` = bank, kind, network (or `unknown`), tier, fee (free, waivable, paid, unknown), reward, maxMonthlyIncome (0 to 10,000, step 500; 10,000 means any), gig, secured, lowIncome. `digital` and `student` were removed.
+
+## Compare rows (updated)
+
+Fees: annual fee (lower), service tax, late charge, cash advance, foreign fee (lower). Rates: interest or profit rate (lower), minimum payment, 0% instalments. Eligibility: tier, minimum age, minimum income (lower), income proof count (higher), lists bank statements (bool), deposit-backed (bool). Rewards: rewards, highest cashback rate (higher), perks. Application: approval time, friendliness (higher). A null value is never "best".
+
+## Best match (updated)
+
+Exclude: under the card's minimum age; income below the card's minimum; or no listed proof that suits the user's work type; or income not stated. **Exception:** a deposit-backed card is kept when income, proof or the minimum income is missing, with the reason "you can pledge a fixed deposit of RMx". Score = friendliness + 1 (gig user and bank statements listed) + 1 (student or part-time and low-income-friendly) + 0.5 (25% income headroom, or deposit route). Pick the best card from each bank first, then fill up to 3.
+
+## Simulator terms (updated)
+
+`Terms` gets `lateMax`. `termsFromCard` uses the highest interest tier, the bank's minimum payment and late charge, and falls back to the standard figures for anything null. `missingTerms` tells the Cost page which figures were replaced.

@@ -15,6 +15,8 @@ export interface Terms {
   minFloor: number;
   lateFlat: number;
   latePercent: number;
+  /** Most the late fee can be, in RM. Leave out for no limit. */
+  lateMax?: number | null;
 }
 
 export const DEFAULT_TERMS: Terms = {
@@ -46,7 +48,8 @@ export function minimumPayment(balance: number, terms: Terms = DEFAULT_TERMS): n
 }
 
 export function lateFee(balance: number, terms: Terms = DEFAULT_TERMS): number {
-  return round2(Math.max(terms.lateFlat, (balance * terms.latePercent) / 100));
+  const fee = Math.max(terms.lateFlat, (balance * terms.latePercent) / 100);
+  return round2(terms.lateMax != null ? Math.min(fee, terms.lateMax) : fee);
 }
 
 export function simulate(input: SimInput, terms: Terms = DEFAULT_TERMS): SimResult {

@@ -12,6 +12,7 @@
     "check:logic": "node scripts/check-logic.ts"
   },
   "dependencies": {
+    "@fontsource/poppins": "^5.3.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

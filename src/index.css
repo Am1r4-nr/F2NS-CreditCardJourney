@@ -1,14 +1,50 @@
 @import 'tailwindcss';
 
+/*
+  Theme: soft peach, cream and mint gradient, navy text and buttons, copper accent.
+  The "cyan" and "teal" colour names are used all over the app, so they are re-pointed here
+  to a navy scale. Changing these values re-colours the whole app.
+*/
 @theme {
-  --font-sans: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --font-sans: 'Poppins', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+
+  --color-cyan-50: #fbf5f0;
+  --color-cyan-100: #f6e9e1;
+  --color-cyan-200: #ebd9d4;
+  --color-cyan-300: #d3cbe0;
+  --color-cyan-400: #9ea3d0;
+  --color-cyan-500: #6a70b3;
+  --color-cyan-600: #3d4491;
+  --color-cyan-700: #1f2563;
+  --color-cyan-800: #171c52;
+  --color-cyan-900: #0f1340;
+  --color-cyan-950: #0a0d2e;
+
+  --color-teal-500: #d98a6c;
+  --color-teal-600: #c4745a;
+  --color-teal-700: #1f2563;
+  --color-teal-800: #171c52;
 }
 
 html { font-size: 16px; }
-body { @apply bg-slate-50 text-slate-900 antialiased; margin: 0; }
-:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+
+body {
+  margin: 0;
+  color: #151a4a;
+  @apply antialiased;
+  background-color: #fdf0e6;
+  background-image:
+    radial-gradient(55% 45% at 6% 4%, #fde6d3 0%, rgba(253, 230, 211, 0) 70%),
+    radial-gradient(45% 40% at 96% 12%, #e3e9f8 0%, rgba(227, 233, 248, 0) 70%),
+    radial-gradient(60% 50% at 4% 96%, #d6f1ec 0%, rgba(214, 241, 236, 0) 70%),
+    linear-gradient(180deg, #fdf1e8 0%, #f1f3f6 55%, #e3f4f1 100%);
+  background-attachment: fixed;
+}
+
+:focus-visible { outline: 3px solid #e08a1e; outline-offset: 2px; }
 h1:focus, h2:focus { outline: none; }
-input[type='range'] { accent-color: #0e7490; }
+input[type='range'] { accent-color: #1f2563; }
+h1, h2, h3 { letter-spacing: -0.01em; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

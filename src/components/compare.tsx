@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { bi, useLang } from '../i18n/index.tsx';
 import { useApp } from '../state/store.tsx';
 import { money, parseAmount } from '../lib/format.ts';
+import { NOT_STATED, annualFeeText, cashAdvanceText, depositText, fxText, interestText, lateFeeText, minPaymentText, networkText, perksList } from '../lib/cardText.ts';
 import type { CardRecord } from '../data/cardTypes.ts';
 import { findCard, CARDS_META } from '../data/cards.ts';
 import { COMPARE_ROWS, GROUP_LABEL, compareRows, derive, proofLabel, type RowGroup } from '../lib/cards.ts';
+import type { CardRecord as Card } from '../data/cardTypes.ts';
 import { useDialog } from '../lib/useDialog.ts';
 import { Button, Callout } from './ui.tsx';
 import { BankLogo, CardBadges, TierTag, Disclaimer, FeeText, FriendlinessBreakdown, useCardActions } from './cards.tsx';
@@ -17,7 +19,7 @@ export function CompareBar({ onOpen, onRemove, onClear }: { onOpen: () => void; 
   const cards = state.compare.selected.map((id) => findCard(id)).filter((c): c is CardRecord => !!c);
   if (cards.length === 0) return null;
   return (
-    <section aria-label={t(bi('Cards to compare', 'Kad untuk dibanding'))} className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-cyan-700 bg-white p-3 shadow-[0_-4px_16px_rgba(0,0,0,0.12)]">
+    <section aria-label={t(bi('Cards to compare', 'Kad untuk dibanding'))} className={`fixed inset-x-0 ${state.demo ? 'bottom-60' : 'bottom-0'} z-30 border-t-2 border-cyan-700 bg-white p-3 shadow-[0_-4px_16px_rgba(0,0,0,0.12)]`}>
       <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center gap-3">
         <p className="font-bold">{t(bi('Compare', 'Banding'))} ({cards.length}/3)</p>
         <ul className="flex flex-1 flex-wrap gap-2">
@@ -87,7 +89,7 @@ export function CompareTable({ ids, onClose, onRemove, onDetails }: { ids: strin
                       <BankLogo card={c} />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-slate-700">{c.bank}</p>
-                        <p className="font-extrabold leading-snug">{c.name}</p>
+                        <p className="font-bold leading-snug">{c.name}</p>
                         <TierTag tier={c.tier} />
                         <button type="button" onClick={() => onRemove(c.id)} className="min-h-11 text-sm font-semibold text-cyan-800 underline" aria-label={`${t(bi('Remove', 'Buang'))} ${c.bank} ${c.name}`}>
                           {t(bi('Remove', 'Buang'))}
@@ -128,7 +130,7 @@ function GroupRows({ group, rows, cols }: { group: RowGroup; rows: ReturnType<ty
   return (
     <>
       <tr>
-        <th scope="colgroup" colSpan={cols + 1} className="sticky left-0 bg-cyan-700 px-2 py-2 text-left text-sm font-extrabold uppercase tracking-wide text-white">
+        <th scope="colgroup" colSpan={cols + 1} className="sticky left-0 bg-cyan-700 px-2 py-2 text-left text-sm font-bold uppercase tracking-wide text-white">
           {t(GROUP_LABEL[group])}
         </th>
       </tr>
@@ -144,7 +146,7 @@ function GroupRows({ group, rows, cols }: { group: RowGroup; rows: ReturnType<ty
             const best = r.best.includes(i);
             return (
               <td key={i} className={`border-b border-slate-200 p-2 align-top ${best ? 'border-l-4 border-l-emerald-600 bg-emerald-50 font-bold' : ''}`}>
-                {best && <span className="mb-1 block text-xs font-extrabold text-emerald-800">★ {t(bi('Best', 'Terbaik'))}</span>}
+                {best && <span className="mb-1 block text-xs font-bold text-emerald-800">★ {t(bi('Best', 'Terbaik'))}</span>}
                 <span>{t(cell.main)}</span>
                 {cell.note && <span className="block text-sm font-normal text-slate-700">{t(cell.note)}</span>}
               </td>
@@ -158,60 +160,91 @@ function GroupRows({ group, rows, cols }: { group: RowGroup; rows: ReturnType<ty
 
 // ---------- Detail drawer ----------
 
+type Text = ReturnType<typeof bi>;
+
+/** What the card is good for, worked out from its facts (not from marketing copy). */
+function goodFor(card: Card): Text[] {
+  const out: Text[] = [];
+  const d = derive(card);
+  if (card.annualFee === 0) out.push(bi('People who want no annual fee.', 'Mereka yang mahu tanpa yuran tahunan.'));
+  if (card.minAnnualIncome !== null && card.minAnnualIncome <= 24000) out.push(bi('People starting out, as it asks for the lowest income banks allow (RM2,000 a month).', 'Mereka yang baru bermula, kerana ia meminta pendapatan paling rendah yang dibenarkan bank (RM2,000 sebulan).'));
+  if (card.secured) out.push(bi('People with little credit history who can set aside a fixed deposit.', 'Mereka yang sejarah kreditnya sedikit dan boleh mengetepikan simpanan tetap.'));
+  if (card.rewards.type !== 'none') out.push({ en: `People who spend where it rewards and pay in full: ${card.rewards.summary.en}`, ms: `Mereka yang berbelanja di tempat ia memberi ganjaran dan membayar penuh: ${card.rewards.summary.ms}` });
+  if (card.perks.some((p) => p.k === 'lounge' || p.k === 'loungeUnlimited')) out.push(bi('Frequent travellers who can meet the income and spending it needs.', 'Pengembara kerap yang boleh memenuhi pendapatan dan perbelanjaan yang diperlukan.'));
+  if (card.kind === 'islamic') out.push(bi('People who want a Shariah-compliant card.', 'Mereka yang mahukan kad patuh Syariah.'));
+  if (d.gigFriendly && card.minAnnualIncome !== null && card.minAnnualIncome <= 36000) out.push(bi('Gig and self-employed workers, as the bank lists bank statements as proof.', 'Pekerja gig dan bekerja sendiri, kerana bank menyenaraikan penyata bank sebagai bukti.'));
+  if (out.length === 0) out.push(bi('People who meet the income and age rules below.', 'Mereka yang memenuhi peraturan pendapatan dan umur di bawah.'));
+  return out.slice(0, 4);
+}
+
+function cautionsFor(card: Card, myMonthly: number, checked: boolean): Text[] {
+  const out: Text[] = [];
+  const d = derive(card);
+  if (!d.gigFriendly) out.push(bi('The bank does not list bank statements as income proof. Without a payslip or LHDN record, applying may be hard.', 'Bank tidak menyenaraikan penyata bank sebagai bukti pendapatan. Tanpa slip gaji atau rekod LHDN, memohon mungkin sukar.'));
+  else out.push(bi('The bank lists bank statements for self-employed or commission earners. It may also ask for business registration or tax forms, so a gig worker should check first.', 'Bank menyenaraikan penyata bank untuk pekerja bekerja sendiri atau pendapatan komisen. Ia juga mungkin meminta pendaftaran perniagaan atau borang cukai, jadi pekerja gig perlu menyemak dahulu.'));
+  if (card.annualFee !== null && card.annualFee > 0) {
+    out.push(bi(`The annual fee is ${money(card.annualFee)}${card.annualFeeWaiver ? `. ${card.annualFeeWaiver.en}` : ''}.`, `Yuran tahunan ialah ${money(card.annualFee)}${card.annualFeeWaiver ? `. ${card.annualFeeWaiver.ms}` : ''}.`));
+  }
+  if (card.annualFee === null) out.push(bi('The annual fee is not stated here. Ask the bank.', 'Yuran tahunan tidak dinyatakan di sini. Tanya bank.'));
+  const top = card.interest ? (card.interest.max ?? card.interest.min) : null;
+  if (top !== null && top >= 17) out.push(bi(`New cardholders can pay up to ${top}% a year on a balance. That is costly if you do not pay in full.`, `Pemegang kad baharu boleh membayar sehingga ${top}% setahun atas baki. Ini mahal jika anda tidak bayar penuh.`));
+  if (card.minAnnualIncome !== null && card.minAnnualIncome / 12 >= 3000) out.push(bi(`It asks for ${money(Math.round(card.minAnnualIncome / 12))} a month in income, which is high for a first card.`, `Ia meminta pendapatan ${money(Math.round(card.minAnnualIncome / 12))} sebulan, yang tinggi untuk kad pertama.`));
+  if (card.minAnnualIncome === null) out.push(bi('The minimum income is not stated, or the card is by invitation. Ask the bank.', 'Pendapatan minimum tidak dinyatakan, atau kad ini dengan jemputan. Tanya bank.'));
+  if (checked && card.minAnnualIncome !== null && !Number.isNaN(myMonthly) && myMonthly * 12 < card.minAnnualIncome) {
+    out.push(bi(`Based on your check, your income (${money(myMonthly)} a month) is below what this card asks for.`, `Berdasarkan semakan anda, pendapatan anda (${money(myMonthly)} sebulan) di bawah yang diminta kad ini.`));
+  }
+  out.push(bi('Meeting the minimum income does not guarantee approval. The bank also checks your credit record and what you already owe.', 'Memenuhi pendapatan minimum tidak menjamin kelulusan. Bank juga menyemak rekod kredit dan hutang sedia ada anda.'));
+  return out;
+}
+
 export function CardDetail({ cardId, onClose, onToggleCompare }: { cardId: string; onClose: () => void; onToggleCompare: (id: string) => void }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { state } = useApp();
   const actions = useCardActions();
   const ref = useDialog<HTMLDivElement>(true, onClose);
   const card = findCard(cardId);
   if (!card) return null;
-  const d = derive(card);
   const inCompare = state.compare.selected.includes(card.id);
   const rows = compareRows([card]);
+  const cautions = cautionsFor(card, parseAmount(state.ready.income), state.readyDone);
+  const rate = interestText(card);
 
-  // "Why this might not suit you"
-  const cautions: ReturnType<typeof bi>[] = [];
-  if (!d.gigFriendly) cautions.push(bi('It does not accept bank statements or gig earnings statements. Without a payslip or LHDN record, applying may be hard.', 'Ia tidak menerima penyata bank atau penyata pendapatan gig. Tanpa slip gaji atau rekod LHDN, permohonan mungkin sukar.'));
-  if (card.annualFee > 0) cautions.push(bi(`The annual fee is ${money(card.annualFee)}${card.annualFeeWaiver ? ' unless you meet the waiver condition' : ''}.`, `Yuran tahunan ialah ${money(card.annualFee)}${card.annualFeeWaiver ? ' kecuali anda memenuhi syarat pengecualian' : ''}.`));
-  if (card.interestPa >= 17) cautions.push(bi(`The ${card.interestPa}% rate is costly if you do not pay in full.`, `Kadar ${card.interestPa}% adalah mahal jika anda tidak bayar penuh.`));
-  if (!card.digitalApplication) cautions.push(bi('You cannot apply fully online. It may take longer.', 'Anda tidak boleh memohon sepenuhnya dalam talian. Ia mungkin mengambil masa lebih lama.'));
-  if (card.minAnnualIncome / 12 >= 3000) cautions.push(bi(`It asks for ${money(Math.round(card.minAnnualIncome / 12))} a month in income, which is high for a first card.`, `Ia meminta pendapatan ${money(Math.round(card.minAnnualIncome / 12))} sebulan, yang tinggi untuk kad pertama.`));
-  const myMonthly = parseAmount(state.ready.income);
-  if (state.readyDone && !Number.isNaN(myMonthly) && myMonthly * 12 < card.minAnnualIncome) {
-    cautions.push(bi(`Based on your check, your income (${money(myMonthly)} a month) is below what this card asks for.`, `Berdasarkan semakan anda, pendapatan anda (${money(myMonthly)} sebulan) di bawah yang diminta kad ini.`));
-  }
-  cautions.push(card.notFor);
-
-  const explain: { title: ReturnType<typeof bi>; text: ReturnType<typeof bi> }[] = [
+  const explain: { title: Text; text: Text }[] = [
     {
       title: bi('Annual fee', 'Yuran tahunan'),
-      text: card.annualFee === 0
-        ? bi('You pay nothing each year to keep this card.', 'Anda tidak membayar apa-apa setiap tahun untuk memegang kad ini.')
-        : bi(`You are charged ${money(card.annualFee)} each year, even if you do not use the card.${card.annualFeeWaiver ? ' ' + card.annualFeeWaiver.en + '.' : ''}`, `Anda dicaj ${money(card.annualFee)} setiap tahun, walaupun anda tidak guna kad.${card.annualFeeWaiver ? ' ' + card.annualFeeWaiver.ms + '.' : ''}`),
+      text: card.annualFee === null
+        ? NOT_STATED
+        : card.annualFee === 0
+          ? bi('You pay nothing each year to keep this card. The RM25 service tax may still apply.', 'Anda tidak membayar apa-apa setiap tahun untuk memegang kad ini. Cukai perkhidmatan RM25 mungkin masih dikenakan.')
+          : { en: `You are charged ${money(card.annualFee)} each year, even if you do not use the card.${card.annualFeeWaiver ? ` ${card.annualFeeWaiver.en}.` : ''}`, ms: `Anda dicaj ${money(card.annualFee)} setiap tahun, walaupun anda tidak guna kad.${card.annualFeeWaiver ? ` ${card.annualFeeWaiver.ms}.` : ''}` },
     },
     {
-      title: bi('Interest', 'Faedah'),
-      text: bi(`Pay the full bill on time and you pay no interest. If you leave a balance, you pay ${card.interestPa}% a year on it.`, `Bayar bil penuh tepat pada masanya dan anda tidak bayar faedah. Jika anda tinggalkan baki, anda bayar ${card.interestPa}% setahun ke atasnya.`),
+      title: bi('Interest or profit rate', 'Kadar faedah atau keuntungan'),
+      text: card.interest
+        ? { en: `Pay the full bill on time and you pay none. If you leave a balance, the rate is ${rate.en} a year. ${card.interestNote?.en ?? ''}`.trim(), ms: `Bayar bil penuh tepat pada masanya dan anda tidak bayar. Jika anda tinggalkan baki, kadarnya ${rate.ms} setahun. ${card.interestNote?.ms ?? ''}`.trim() }
+        : NOT_STATED,
     },
     {
       title: bi('Minimum payment', 'Bayaran minimum'),
-      text: bi(`The smallest you must pay each month is ${card.minPayment.percent}% of what you owe or ${money(card.minPayment.floor)}, whichever is higher. Paying only this keeps you in debt for a long time.`, `Jumlah paling sedikit yang perlu dibayar setiap bulan ialah ${card.minPayment.percent}% daripada hutang atau ${money(card.minPayment.floor)}, mana yang lebih tinggi. Membayar jumlah ini sahaja menyebabkan anda berhutang lama.`),
+      text: card.minPayment
+        ? { en: `${minPaymentText(card).en}. Paying only this keeps you in debt for a long time.`, ms: `${minPaymentText(card).ms}. Membayar jumlah ini sahaja menyebabkan anda berhutang lama.` }
+        : NOT_STATED,
     },
     {
-      title: bi('Late payment fee', 'Fi bayaran lewat'),
-      text: bi(`If you miss the due date, you pay ${money(card.lateFee.flat)} or ${card.lateFee.percent}% of what you owe, whichever is higher. Late payments can also hurt your record.`, `Jika anda terlepas tarikh akhir, anda bayar ${money(card.lateFee.flat)} atau ${card.lateFee.percent}% daripada hutang, mana yang lebih tinggi. Bayaran lewat juga boleh menjejaskan rekod anda.`),
+      title: bi('Late payment charge', 'Caj bayaran lewat'),
+      text: card.lateFee ? { en: `${lateFeeText(card).en}. Late payments can also hurt your credit record.`, ms: `${lateFeeText(card).ms}. Bayaran lewat juga boleh menjejaskan rekod kredit anda.` } : NOT_STATED,
     },
-    {
-      title: bi('Cash advance', 'Pendahuluan tunai'),
-      text: bi(`Taking cash out with the card costs ${card.cashAdvance.percent}% (at least ${money(card.cashAdvance.min)}) and interest starts at once. Best to avoid it.`, `Mengeluarkan wang tunai dengan kad berharga ${card.cashAdvance.percent}% (sekurang-kurangnya ${money(card.cashAdvance.min)}) dan faedah bermula serta-merta. Elakkan.`),
-    },
-    {
-      title: bi('Spending abroad', 'Berbelanja di luar negara'),
-      text: bi(`Buying in another currency adds ${card.fxFeePercent}% to the price.`, `Membeli dalam mata wang lain menambah ${card.fxFeePercent}% pada harga.`),
-    },
+    { title: bi('Cash advance', 'Pendahuluan tunai'), text: card.cashAdvance ? { en: `${cashAdvanceText(card).en}. Best to avoid it.`, ms: `${cashAdvanceText(card).ms}. Elakkan.` } : NOT_STATED },
+    { title: bi('Spending abroad', 'Berbelanja di luar negara'), text: fxText(card) },
   ];
 
   const groups = (Object.keys(GROUP_LABEL) as RowGroup[]).filter((g) => COMPARE_ROWS.some((r) => r.group === g));
+  const perks = perksList(card);
+  const pageLabel = card.hasOwnPage ? bi('Official card page', 'Laman kad rasmi') : card.sourceUrl === card.bankWebsite ? bi('Bank website', 'Laman web bank') : bi('Bank’s credit cards page', 'Laman kad kredit bank');
+  const links: { label: Text; url: string }[] = [{ label: pageLabel, url: card.sourceUrl }];
+  if (card.feesUrl) links.push({ label: bi('Fees and charges (bank)', 'Yuran dan caj (bank)'), url: card.feesUrl });
+  if (card.pdsUrl) links.push({ label: bi('Product disclosure sheet (bank)', 'Helaian pendedahan produk (bank)'), url: card.pdsUrl });
+  if (!links.some((l) => l.url === card.bankWebsite)) links.push({ label: bi('Bank website', 'Laman web bank'), url: card.bankWebsite });
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/50" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -220,7 +253,7 @@ export function CardDetail({ cardId, onClose, onToggleCompare }: { cardId: strin
           <div className="flex min-w-0 items-center gap-3">
             <BankLogo card={card} />
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-700">{card.bank} · {card.network} · {card.kind === 'islamic' ? t(bi('Islamic', 'Islamik')) : t(bi('Conventional', 'Konvensional'))}</p>
+              <p className="text-sm font-semibold text-slate-700">{card.bank} · {t(networkText(card))} · {card.kind === 'islamic' ? t(bi('Islamic', 'Islamik')) : t(bi('Conventional', 'Konvensional'))}</p>
               <h2 id="detail-title" className="text-2xl font-extrabold leading-tight">{card.name}</h2>
               <TierTag tier={card.tier} />
             </div>
@@ -234,7 +267,13 @@ export function CardDetail({ cardId, onClose, onToggleCompare }: { cardId: strin
 
           <section aria-labelledby="d-best">
             <h3 id="d-best" className="text-lg font-extrabold">{t(bi('Who is this card best for?', 'Siapa yang paling sesuai dengan kad ini?'))}</h3>
-            <p className="mt-1 text-base">{t(card.bestFor)}</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5 text-base">{goodFor(card).map((g, i) => <li key={i}>{t(g)}</li>)}</ul>
+          </section>
+
+          <section aria-label={t(bi('Why this might not suit you', 'Mengapa kad ini mungkin tidak sesuai'))}>
+            <Callout tone="warn" title={t(bi('Why this might not suit you', 'Mengapa kad ini mungkin tidak sesuai'))}>
+              <ul className="list-disc space-y-1 pl-5">{cautions.map((c, i) => <li key={i}>{t(c)}</li>)}</ul>
+            </Callout>
           </section>
 
           <section aria-labelledby="d-fee">
@@ -250,23 +289,12 @@ export function CardDetail({ cardId, onClose, onToggleCompare }: { cardId: strin
             </dl>
           </section>
 
-          <section aria-labelledby="d-pc" className="grid gap-3 sm:grid-cols-2">
-            <h3 id="d-pc" className="sr-only">{t(bi('Pros and cons', 'Kelebihan dan kekurangan'))}</h3>
-            <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-3">
-              <p className="font-extrabold text-emerald-900">✔ {t(bi('Pros', 'Kelebihan'))}</p>
-              <ul className="mt-1 list-disc space-y-1 pl-5">{card.pros.map((p, i) => <li key={i}>{t(p)}</li>)}</ul>
-            </div>
-            <div className="rounded-2xl border border-rose-300 bg-rose-50 p-3">
-              <p className="font-extrabold text-rose-900">✘ {t(bi('Cons', 'Kekurangan'))}</p>
-              <ul className="mt-1 list-disc space-y-1 pl-5">{card.cons.map((p, i) => <li key={i}>{t(p)}</li>)}</ul>
-            </div>
-          </section>
-
-          <section aria-label={t(bi('Why this might not suit you', 'Mengapa kad ini mungkin tidak sesuai'))}>
-            <Callout tone="warn" title={t(bi('Why this might not suit you', 'Mengapa kad ini mungkin tidak sesuai'))}>
-              <ul className="list-disc space-y-1 pl-5">{cautions.map((c, i) => <li key={i}>{t(c)}</li>)}</ul>
-            </Callout>
-          </section>
+          {perks.length > 0 && (
+            <section aria-labelledby="d-perks">
+              <h3 id="d-perks" className="text-lg font-extrabold">{t(bi('Perks listed by the bank', 'Faedah yang disenaraikan bank'))}</h3>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-base">{perks.map((p, i) => <li key={i}>{t(p)}</li>)}</ul>
+            </section>
+          )}
 
           <section aria-labelledby="d-facts">
             <h3 id="d-facts" className="text-lg font-extrabold">{t(bi('Full details', 'Butiran penuh'))}</h3>
@@ -286,8 +314,9 @@ export function CardDetail({ cardId, onClose, onToggleCompare }: { cardId: strin
                 </dl>
               </div>
             ))}
-            <p className="mt-3 text-base"><strong>{t(bi('Accepted income proof', 'Bukti pendapatan diterima'))}:</strong> {card.incomeProof.map((p) => t(proofLabel(p))).join(', ')}</p>
-            <p className="mt-1 text-base"><strong>{t(bi('Extra cards', 'Kad tambahan'))}:</strong> {card.supplementary.max === 0 ? t(bi('Not offered', 'Tidak ditawarkan')) : t(bi(`Up to ${card.supplementary.max}, ${money(card.supplementary.annualFee)} a year each`, `Sehingga ${card.supplementary.max}, ${money(card.supplementary.annualFee)} setahun setiap satu`))}</p>
+            <p className="mt-3 text-base"><strong>{t(bi('Income proof the bank lists', 'Bukti pendapatan yang disenaraikan bank'))}:</strong> {card.incomeProof.map((p) => t(proofLabel(p))).join(', ')}</p>
+            <p className="mt-1 text-base"><strong>{t(bi('Deposit-backed option', 'Pilihan disandarkan simpanan'))}:</strong> {t(depositText(card))}</p>
+            <p className="mt-1 text-base"><strong>{t(bi('Annual fee', 'Yuran tahunan'))}:</strong> {t(annualFeeText(card))}</p>
           </section>
 
           <section aria-labelledby="d-score">
@@ -296,13 +325,21 @@ export function CardDetail({ cardId, onClose, onToggleCompare }: { cardId: strin
             <p className="mt-2 text-sm text-slate-600">{t(bi('Ranking is based on suitability for first-time users, not sponsorship.', 'Kedudukan berdasarkan kesesuaian untuk pengguna kali pertama, bukan penajaan.'))}</p>
           </section>
 
-          <p className="text-sm text-slate-600">
-            {t(bi('Last updated', 'Dikemas kini'))}: {card.lastUpdated}.{' '}
-            <a href={card.sourceUrl} target="_blank" rel="noreferrer" className="font-semibold text-cyan-800 underline">
-              {t(bi('Source: bank official website (placeholder link)', 'Sumber: laman web rasmi bank (pautan placeholder)'))}
-            </a>
-            . {t(CARDS_META.note)}
-          </p>
+          <section aria-labelledby="d-links" className="rounded-2xl bg-slate-50 p-3">
+            <h3 id="d-links" className="text-lg font-extrabold">{t(bi('Check it yourself', 'Semak sendiri'))}</h3>
+            <ul className="mt-1 space-y-1">
+              {links.map((l) => (
+                <li key={l.url}><a href={l.url} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-11 items-center font-semibold text-cyan-800 underline">{t(l.label)} ↗</a></li>
+              ))}
+            </ul>
+            <p className="mt-2 text-sm text-slate-700">{t(bi('Last checked', 'Disemak kali terakhir'))}: {card.lastUpdated}. {t(bi('Where this data came from:', 'Sumber data ini:'))}</p>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {card.dataSources.map((s) => (
+                <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer noopener" className="font-semibold text-cyan-800 underline">{s.name}</a></li>
+              ))}
+            </ul>
+            <p className="mt-2 text-sm text-slate-600">{t(CARDS_META.note)} <span className="sr-only">{lang}</span></p>
+          </section>
         </div>
 
         <div className="grid gap-2 border-t border-slate-200 bg-white p-3 sm:grid-cols-3">

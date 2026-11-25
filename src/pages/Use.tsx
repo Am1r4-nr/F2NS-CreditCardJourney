@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { bi, useLang } from '../i18n/index.tsx';
 import { useApp } from '../state/store.tsx';
-import { Callout, PageTitle } from '../components/ui.tsx';
+import { PageTitle } from '../components/ui.tsx';
+import { Quiz } from '../components/learn.tsx';
+import { Guide } from '../components/guide.tsx';
 import { SelectedCardChip } from '../components/cards.tsx';
 import { PayByCard, PayOptions, ReminderBanner, Settings, SpendForm, SpendList, Tracker, UsageMeter } from '../components/usage.tsx';
 import { findCard } from '../data/cards.ts';
@@ -116,9 +118,9 @@ export function UsePage() {
 
       <Settings use={u} onChange={setUse} onDownload={download} onSample={loadSample} onClear={clearAll} canDownload={nextDueDates().length > 0} />
 
-      <Callout tone="info" title={t(bi('Coming next in this stage', 'Seterusnya dalam peringkat ini'))}>
-        {t(bi('The first-3-months guide and the short quiz are not built yet.', 'Panduan 3 bulan pertama dan kuiz ringkas belum dibina.'))}
-      </Callout>
+      <Guide />
+
+      <Quiz />
 
       <p className="sr-only" role="status" aria-live="polite">{announce}</p>
     </div>

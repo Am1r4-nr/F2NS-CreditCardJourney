@@ -1,7 +1,8 @@
 import { bi, useLang } from '../i18n/index.tsx';
 import { useApp } from '../state/store.tsx';
-import { href, navigate } from '../lib/router.ts';
+import { href, learnHref, navigate } from '../lib/router.ts';
 import { money, parseAmount } from '../lib/format.ts';
+import { annualFeeText, incomeShort, interestText, networkText, rateLabel } from '../lib/cardText.ts';
 import type { CardRecord, Tier } from '../data/cardTypes.ts';
 import { BANKS, CARDS, findCard } from '../data/cards.ts';
 import {
@@ -30,7 +31,7 @@ export function Disclaimer({ compact = false }: { compact?: boolean }) {
 
 export function BankLogo({ card }: { card: CardRecord }) {
   return (
-    <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-dashed border-cyan-300 bg-cyan-50 text-sm font-extrabold text-cyan-800">
+    <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-dashed border-cyan-300 bg-cyan-50 text-sm font-bold text-cyan-800">
       {card.bankShort}
     </span>
   );
@@ -66,8 +67,8 @@ export function CardBadges({ card }: { card: CardRecord }) {
   if (d.feeKind === 'free') items.push({ key: 'free', label: '✔ ' + t(bi('No annual fee', 'Tiada yuran tahunan')), tone: 'good' });
   if (d.feeKind === 'waivable') items.push({ key: 'waive', label: '↺ ' + t(bi('Fee waivable', 'Yuran boleh dikecualikan')), tone: 'info' });
   if (card.kind === 'islamic') items.push({ key: 'islamic', label: '☪ ' + t(bi('Islamic', 'Islamik')), tone: 'info' });
-  if (card.secured) items.push({ key: 'secured', label: '🔒 ' + t(bi('Secured', 'Bercagar')), tone: 'info' });
-  if (d.studentFriendly) items.push({ key: 'student', label: '🎓 ' + t(bi('Student', 'Pelajar')), tone: 'info' });
+  if (card.secured) items.push({ key: 'secured', label: '🔒 ' + t(bi('Deposit-backed option', 'Pilihan disandarkan simpanan')), tone: 'info' });
+  if (d.lowIncomeFriendly && !card.secured) items.push({ key: 'low', label: '💵 ' + t(bi('Low income needed', 'Pendapatan rendah')), tone: 'info' });
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label={t(bi('Badges', 'Lencana'))}>
       {items.map((i) => (
@@ -82,7 +83,7 @@ export function FeeText({ card }: { card: CardRecord }) {
   const { t } = useLang();
   return (
     <span>
-      <span className="font-bold">{card.annualFee === 0 ? t(bi('RM0 a year', 'RM0 setahun')) : `${money(card.annualFee)} ${t(bi('a year', 'setahun'))}`}</span>
+      <span className="font-bold">{t(annualFeeText(card))}</span>
       {card.annualFeeWaiver && <span className="block text-sm font-normal text-slate-700">{t(card.annualFeeWaiver)}</span>}
     </span>
   );
@@ -99,7 +100,7 @@ export function SelectedCardChip({ showClear = true }: { showClear?: boolean }) 
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-cyan-900">{t(bi('Your selected card', 'Kad pilihan anda'))}</p>
         <p className="font-bold">{card.bank} {card.name}</p>
-        <p className="text-sm text-slate-700">{t(bi('Annual fee', 'Yuran tahunan'))}: {card.annualFee === 0 ? 'RM0' : money(card.annualFee)}</p>
+        <p className="text-sm text-slate-700">{t(bi('Annual fee', 'Yuran tahunan'))}: {t(annualFeeText(card))}</p>
       </div>
       <a href={href('compare')} className="flex min-h-11 items-center rounded-lg px-3 font-semibold text-cyan-800 underline">{t(bi('Change card', 'Tukar kad'))}</a>
       {showClear && (
@@ -130,7 +131,7 @@ export function CardTile({ card, selected, onToggle, onDetails }: TileProps) {
         <div className="flex items-center gap-3">
           <BankLogo card={card} />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-700">{card.bank} · {card.network}</p>
+            <p className="text-sm font-semibold text-slate-700">{card.bank} · {t(networkText(card))}</p>
             <h3 className="text-lg font-extrabold leading-snug">{card.name}</h3>
             <TierTag tier={card.tier} />
           </div>
@@ -142,12 +143,12 @@ export function CardTile({ card, selected, onToggle, onDetails }: TileProps) {
             <dd><FeeText card={card} /></dd>
           </div>
           <div>
-            <dt className="text-sm text-slate-600">{card.kind === 'islamic' ? t(bi('Profit rate a year', 'Kadar keuntungan setahun')) : t(bi('Interest a year', 'Faedah setahun'))}</dt>
-            <dd className="font-bold">{card.interestPa}%</dd>
+            <dt className="text-sm text-slate-600">{t(rateLabel(card))}</dt>
+            <dd className="font-bold">{t(interestText(card))}</dd>
           </div>
           <div>
             <dt className="text-sm text-slate-600">{t(bi('Income needed', 'Pendapatan diperlukan'))}</dt>
-            <dd className="font-bold">{money(Math.round(card.minAnnualIncome / 12))} {t(bi('a month', 'sebulan'))}</dd>
+            <dd className="font-bold">{t(incomeShort(card))}</dd>
           </div>
           <div className="col-span-2">
             <dt className="text-sm text-slate-600">{t(bi('Key reward', 'Ganjaran utama'))}</dt>
@@ -213,19 +214,22 @@ export function FilterPanel({ filters, onChange, onClear, activeCount }: { filte
       </Sel>
       <Sel id="f-tier" label={t(bi('Card tier', 'Tahap kad'))} value={filters.tier} onChange={(v) => onChange({ tier: v as Filters['tier'] })}>
         <option value="">{all}</option>
-        {TIER_ORDER.map((k) => <option key={k} value={k}>{t(TIER_INFO[k].label)}</option>)}
+        {TIER_ORDER.filter((k) => CARDS.some((c) => c.tier === k)).map((k) => <option key={k} value={k}>{t(TIER_INFO[k].label)}</option>)}
       </Sel>
       <Sel id="f-network" label={t(bi('Network', 'Rangkaian'))} value={filters.network} onChange={(v) => onChange({ network: v as Filters['network'] })}>
         <option value="">{all}</option>
         <option value="Visa">Visa</option>
         <option value="Mastercard">Mastercard</option>
         <option value="Amex">Amex</option>
+        <option value="UnionPay">UnionPay</option>
+        <option value="unknown">{t(bi('Not stated', 'Tidak dinyatakan'))}</option>
       </Sel>
       <Sel id="f-fee" label={t(bi('Annual fee', 'Yuran tahunan'))} value={filters.fee} onChange={(v) => onChange({ fee: v as Filters['fee'] })}>
         <option value="">{all}</option>
         <option value="free">{t(bi('Free (RM0)', 'Percuma (RM0)'))}</option>
         <option value="waivable">{t(bi('Can be waived', 'Boleh dikecualikan'))}</option>
         <option value="paid">{t(bi('Paid', 'Berbayar'))}</option>
+        <option value="unknown">{t(bi('Not stated', 'Tidak dinyatakan'))}</option>
       </Sel>
       <Sel id="f-reward" label={t(bi('Rewards', 'Ganjaran'))} value={filters.reward} onChange={(v) => onChange({ reward: v as Filters['reward'] })}>
         <option value="">{all}</option>
@@ -240,10 +244,9 @@ export function FilterPanel({ filters, onChange, onClear, activeCount }: { filte
         <div className="flex justify-between text-sm text-slate-600"><span>RM0</span><span>{t(bi('Any', 'Mana-mana'))}</span></div>
       </div>
       <div className="grid gap-2">
-        <Check id="f-gig" label={t(bi('Accepts gig income proof', 'Terima bukti pendapatan gig'))} checked={filters.gig} onChange={(v) => onChange({ gig: v })} />
-        <Check id="f-secured" label={t(bi('Secured card', 'Kad bercagar'))} checked={filters.secured} onChange={(v) => onChange({ secured: v })} />
-        <Check id="f-digital" label={t(bi('Apply online', 'Mohon dalam talian'))} checked={filters.digital} onChange={(v) => onChange({ digital: v })} />
-        <Check id="f-student" label={t(bi('Student-friendly', 'Mesra pelajar'))} checked={filters.student} onChange={(v) => onChange({ student: v })} />
+        <Check id="f-gig" label={t(bi('Lists bank statements as income proof', 'Menyenaraikan penyata bank sebagai bukti pendapatan'))} checked={filters.gig} onChange={(v) => onChange({ gig: v })} />
+        <Check id="f-secured" label={t(bi('Fixed-deposit-backed option', 'Pilihan disandarkan simpanan tetap'))} checked={filters.secured} onChange={(v) => onChange({ secured: v })} />
+        <Check id="f-lowincome" label={t(bi('Low income or deposit-backed', 'Pendapatan rendah atau disandarkan simpanan'))} checked={filters.lowIncome} onChange={(v) => onChange({ lowIncome: v })} />
       </div>
       <Button variant="secondary" className="w-full" onClick={onClear} disabled={activeCount === 0}>
         {t(bi('Clear filters', 'Kosongkan penapis'))}
@@ -290,7 +293,7 @@ export function BestMatchPanel({ onDetails, onCompare }: { onDetails: (id: strin
           {result.matches.map((m, i) => (
             <li key={m.card.id} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4">
               <p className="text-sm font-bold text-cyan-800">#{i + 1} {t(bi('match', 'padanan'))}</p>
-              <p className="text-lg font-extrabold">{m.card.bank} {m.card.name}</p>
+              <p className="text-lg font-bold">{m.card.bank} {m.card.name}</p>
               <ul className="my-2 list-disc space-y-1 pl-5 text-base">
                 {m.reasons.map((x, j) => <li key={j}>{t(x)}</li>)}
               </ul>
@@ -302,13 +305,14 @@ export function BestMatchPanel({ onDetails, onCompare }: { onDetails: (id: strin
           ))}
         </ol>
       )}
-      {(result.matches.length < 3) && (ex.tooYoung + ex.lowIncome + ex.noProof > 0) && (
+      {(result.matches.length < 3) && (ex.tooYoung + ex.lowIncome + ex.noProof + ex.incomeNotStated > 0) && (
         <p className="mt-3 text-base text-slate-700">
           {t(bi('Left out: ', 'Ditinggalkan: '))}
           {ex.tooYoung > 0 && t(bi(`${ex.tooYoung} need a higher minimum age. `, `${ex.tooYoung} memerlukan umur minimum lebih tinggi. `))}
           {ex.lowIncome > 0 && t(bi(`${ex.lowIncome} ask for more income. `, `${ex.lowIncome} meminta pendapatan lebih tinggi. `))}
-          {ex.noProof > 0 && t(bi(`${ex.noProof} do not accept the income proof that suits your work type. `, `${ex.noProof} tidak menerima bukti pendapatan yang sesuai dengan jenis kerja anda. `))}
-          {result.securedFit && t(bi(`A secured card such as ${result.securedFit.bank} ${result.securedFit.name} may help.`, `Kad bercagar seperti ${result.securedFit.bank} ${result.securedFit.name} mungkin membantu.`))}
+          {ex.noProof > 0 && t(bi(`${ex.noProof} do not list the income proof that suits your work type. `, `${ex.noProof} tidak menyenaraikan bukti pendapatan yang sesuai dengan jenis kerja anda. `))}
+          {ex.incomeNotStated > 0 && t(bi(`${ex.incomeNotStated} do not state a minimum income, so we cannot check them for you. `, `${ex.incomeNotStated} tidak menyatakan pendapatan minimum, jadi kami tidak dapat menyemaknya untuk anda. `))}
+          {result.securedFit && t(bi(`A deposit-backed card such as ${result.securedFit.bank} ${result.securedFit.name} may help.`, `Kad disandarkan simpanan seperti ${result.securedFit.bank} ${result.securedFit.name} mungkin membantu.`))}
         </p>
       )}
     </Card>
@@ -320,9 +324,9 @@ export function BestMatchPanel({ onDetails, onCompare }: { onDetails: (id: strin
 export function TipsStrip({ highlightMany }: { highlightMany: boolean }) {
   const { t } = useLang();
   const tips = [
-    { key: 'many', text: bi('Avoid applying for many cards at once. Each application can leave a mark on your record.', 'Elakkan memohon banyak kad serentak. Setiap permohonan boleh meninggalkan kesan pada rekod anda.'), link: bi('Learn: myths about applying', 'Belajar: mitos tentang memohon') },
-    { key: 'fee', text: bi('Annual fee is not the only cost. Check the interest rate and late fees too.', 'Yuran tahunan bukan satu-satunya kos. Semak juga kadar faedah dan fi lewat.'), link: bi('Learn: minimum vs full payment', 'Belajar: bayaran minimum vs penuh') },
-    { key: 'full', text: bi('A rewards card only pays off if you pay the full bill each month.', 'Kad ganjaran hanya berbaloi jika anda bayar bil penuh setiap bulan.'), link: bi('Learn: pay in full', 'Belajar: bayar penuh') },
+    { key: 'many', text: bi('Avoid applying for many cards at once. Each application can leave a mark on your record.', 'Elakkan memohon banyak kad serentak. Setiap permohonan boleh meninggalkan kesan pada rekod anda.'), link: bi('Learn: myths about applying', 'Belajar: mitos tentang memohon'), card: 'myths' },
+    { key: 'fee', text: bi('Annual fee is not the only cost. Check the interest rate and late fees too.', 'Yuran tahunan bukan satu-satunya kos. Semak juga kadar faedah dan fi lewat.'), link: bi('Learn: minimum vs full payment', 'Belajar: bayaran minimum vs penuh'), card: 'min-vs-full' },
+    { key: 'full', text: bi('A rewards card only pays off if you pay the full bill each month.', 'Kad ganjaran hanya berbaloi jika anda bayar bil penuh setiap bulan.'), link: bi('Learn: pay in full', 'Belajar: bayar penuh'), card: 'min-vs-full' },
   ];
   return (
     <section aria-labelledby="tips-h" className="space-y-3">
@@ -331,7 +335,7 @@ export function TipsStrip({ highlightMany }: { highlightMany: boolean }) {
         {tips.map((x) => (
           <li key={x.key} className={`rounded-2xl border p-4 ${x.key === 'many' && highlightMany ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'}`}>
             <p className="text-base">💡 {t(x.text)}</p>
-            <a href={href('learn')} className="mt-1 inline-flex min-h-11 items-center font-semibold text-cyan-800 underline">{t(x.link)} →</a>
+            <a href={learnHref(x.card)} className="mt-1 inline-flex min-h-11 items-center font-semibold text-cyan-800 underline">{t(x.link)} →</a>
           </li>
         ))}
       </ul>
@@ -347,7 +351,7 @@ export function FriendlinessBreakdown({ card }: { card: CardRecord }) {
   return (
     <div>
       <p className="mb-1"><Stars n={d.friendliness} /></p>
-      <p className="mb-2 text-sm text-slate-700">{t(bi('The score adds up 5 things, up to 1 point each, and is rounded:', 'Skor ini menjumlahkan 5 perkara, sehingga 1 mata setiap satu, dan dibundarkan:'))}</p>
+      <p className="mb-2 text-sm text-slate-700">{t(bi('The score starts at 1 and adds up to 1 point for each of these 4 things, then is rounded (5 is the top):', 'Skor bermula pada 1 dan menambah sehingga 1 mata bagi setiap 4 perkara ini, kemudian dibundarkan (5 ialah tertinggi):'))}</p>
       <ul className="space-y-1 text-base">
         {(Object.keys(CRITERIA_LABEL) as Criterion[]).map((k) => {
           const p = d.points[k];
@@ -376,5 +380,5 @@ export function useCardActions() {
 
 export function SampleNote() {
   const { t } = useLang();
-  return <p className="text-sm text-slate-600">{t(CARDS_META.note)} {t(bi('Last updated', 'Dikemas kini'))}: {CARDS_META.lastUpdated}.</p>;
+  return <p className="text-sm text-slate-600">{t(CARDS_META.note)} {t(bi('Last checked', 'Disemak kali terakhir'))}: {CARDS_META.lastUpdated}.</p>;
 }

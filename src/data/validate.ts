@@ -72,7 +72,7 @@ export function validateCards(input: unknown): string[] {
     const rw = c.rewards as Record<string, unknown> | undefined;
     if (!rw || !REWARD_TYPES.includes(rw.type as never) || !isBi(rw.summary) || !isNumOrNull(rw.valuePercent)) bad('rewards', 'needs type, summary and valuePercent (a number or null)');
     const perks = c.perks;
-    if (!Array.isArray(perks) || perks.some((p) => !PERK_KEYS.includes((p as { k?: never }).k) || ((p as { n?: unknown }).n !== undefined && !isNum((p as { n?: unknown }).n)))) bad('perks', 'must be a list of { k, n? } with a known k');
+    if (!Array.isArray(perks) || perks.some((p) => !PERK_KEYS.includes((p as { k: never }).k) || ((p as { n?: unknown }).n !== undefined && !isNum((p as { n?: unknown }).n)))) bad('perks', 'must be a list of { k, n? } with a known k');
     const io = c.interestOverride as Record<string, unknown> | undefined;
     if (io !== undefined && (!isNum(io.min) || !isNumOrNull(io.max))) bad('interestOverride', 'needs min and max');
     if (c.incomeProof !== undefined && (!Array.isArray(c.incomeProof) || c.incomeProof.some((p) => !PROOFS.includes(p as never)))) bad('incomeProof', 'must list known proof types');

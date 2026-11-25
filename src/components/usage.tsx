@@ -47,7 +47,7 @@ export function ReminderBanner({ open }: { open: Statement }) {
   const { t, lang } = useLang();
   return (
     <div role="status" className="rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-amber-950">
-      <p className="text-lg font-extrabold">⏰ {t(bi('Reminder: your bill is due', 'Peringatan: bil anda hampir tarikh akhir'))}</p>
+      <p className="text-lg font-bold">⏰ {t(bi('Reminder: your bill is due', 'Peringatan: bil anda hampir tarikh akhir'))}</p>
       <p>{t(bi(`Pay ${money(open.balance - open.paidTotal, 2)} by ${fmtDate(open.due, 'en')}. ${daysLeftText(open.daysLeft).en}.`, `Bayar ${money(open.balance - open.paidTotal, 2)} sebelum ${fmtDate(open.due, 'ms')}. ${daysLeftText(open.daysLeft).ms}.`))}</p>
       <p className="sr-only">{fmtDate(open.due, lang)}</p>
     </div>
@@ -133,7 +133,7 @@ function Fact({ label, value, big }: { label: Bi; value: string; big?: boolean }
   return (
     <div className="rounded-2xl bg-slate-50 p-3">
       <dt className="text-sm text-slate-600">{t(label)}</dt>
-      <dd className={big ? 'text-xl font-extrabold' : 'text-lg font-bold'}>{value}</dd>
+      <dd className={big ? 'text-xl font-bold' : 'text-lg font-bold'}>{value}</dd>
     </div>
   );
 }
@@ -276,7 +276,7 @@ export function UsageMeter({ sum, limit }: { sum: UsageSummary; limit: number })
       <h2 id="meter-h" className="text-2xl font-extrabold">{t(bi('This month’s usage', 'Penggunaan bulan ini'))}</h2>
       <p className="text-base text-slate-700">{fmtDate(sum.current.start, lang)} → {fmtDate(sum.current.end, lang)}</p>
       <Card className="space-y-3">
-        <p className="text-3xl font-extrabold">{money(sum.currentSpend, 2)} <span className="text-lg font-semibold text-slate-600">{t(bi('of', 'daripada'))} {money(limit)}</span></p>
+        <p className="text-3xl font-bold">{money(sum.currentSpend, 2)} <span className="text-lg font-semibold text-slate-600">{t(bi('of', 'daripada'))} {money(limit)}</span></p>
         <div className="relative">
           <div role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t(bi('Share of your limit used', 'Peratusan had yang digunakan'))} className="h-5 w-full overflow-hidden rounded-full bg-slate-200">
             <div className={`h-full rounded-full ${barColour}`} style={{ width: `${shown}%` }} />
@@ -284,7 +284,7 @@ export function UsageMeter({ sum, limit }: { sum: UsageSummary; limit: number })
           <div aria-hidden="true" className="absolute -top-1 h-7 border-l-2 border-dashed border-slate-900" style={{ left: `${UTILISATION_TARGET}%` }} />
           <p aria-hidden="true" className="absolute top-7 -translate-x-1/2 text-xs font-semibold text-slate-700" style={{ left: `${UTILISATION_TARGET}%` }}>{UTILISATION_TARGET}% {t(bi('target', 'sasaran'))}</p>
         </div>
-        <p className="pt-4 text-xl font-extrabold">
+        <p className="pt-4 text-xl font-bold">
           <span aria-hidden="true">{band.symbol} </span>{pct}% {t(bi('used', 'digunakan'))}: {t(band.label)}
         </p>
         <Callout tone={band.tone}>{t(band.tip)}</Callout>
@@ -397,7 +397,7 @@ export function Tracker({ sum }: { sum: UsageSummary }) {
     <section aria-labelledby="track-h" className="space-y-3">
       <h2 id="track-h" className="text-2xl font-extrabold">{t(bi('Your credit-building tracker', 'Penjejak pembinaan kredit anda'))}</h2>
       <Card className="space-y-3">
-        <p className="text-3xl font-extrabold">{t(bi('On-time payments', 'Bayaran tepat masa'))}: {sum.onTimeCount} {t(bi('out of 3', 'daripada 3'))}</p>
+        <p className="text-3xl font-bold">{t(bi('On-time payments', 'Bayaran tepat masa'))}: {sum.onTimeCount} {t(bi('out of 3', 'daripada 3'))}</p>
         {sum.recent.length === 0 ? (
           <p className="text-lg text-slate-700">{t(bi('Your statements will show up here after your first statement date.', 'Penyata anda akan dipaparkan di sini selepas tarikh penyata pertama anda.'))}</p>
         ) : (

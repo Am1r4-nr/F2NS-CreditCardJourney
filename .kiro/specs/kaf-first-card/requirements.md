@@ -267,16 +267,19 @@ All content is illustrative. There is no real backend and no real bank offer.
 - **REQ-9 (preference card):** THE System SHALL add a sixth field, "Which card features mattered most when comparing?", and log compared and selected cards (see 11.10).
 - **NFR-3 (disclosure):** THE System SHALL show the card data disclaimer in 11.2 wherever card data appears.
 
-### 11.1 Card data
+### 11.1 Card data (real bank data)
 
-**User story:** As the workshop facilitator, I want all card data in one file I can edit, so I can keep it up to date without touching the code.
+**User story:** As a first-time user, I want to see real cards from Malaysian banks, with links to the bank, so I can compare what is actually on offer. As the workshop facilitator, I want the data in one file I can edit.
 
-1. THE System SHALL read all card data from one file, `src/data/cards.json`, described by one TypeScript type.
-2. THE System SHALL include 10 to 12 cards from different Malaysian banks, including both conventional and Islamic cards.
-3. THE System SHALL store for each card: bank, card name, network (Visa, Mastercard or Amex), card type (conventional or Islamic), tier (classic, gold, platinum, secured or student), annual fee, annual fee waiver condition, interest rate per year, minimum payment rule, late payment fee, cash advance fee, foreign currency fee, minimum age, minimum annual income, accepted income proofs (payslip, bank statement, LHDN, gig earnings statement), supplementary cards, rewards type (cashback, points, miles or none) with a summary, welcome offer, 0% instalment plans, digital application (yes or no), typical approval time, secured option, pros and cons, a last updated date and a source link.
-4. THE System SHALL show a "Last updated" date and a "Source: bank official website" link placeholder on every card.
-5. THE System SHALL mark every value as sample data to be verified on each bank's official website.
-6. IF a card record is missing a required field or has an unknown value, THEN the logic check script SHALL fail and name the card and the field.
+1. THE System SHALL read all card data from one file, `src/data/cards.json`, described by one TypeScript type. The file has a list of `banks` (rules shared by every card of a bank) and a list of `cards`.
+2. THE System SHALL include real credit cards (personal cards, not business cards) from at least 10 Malaysian banks, conventional and Islamic, at every level from entry cards to premium cards. It SHALL NOT limit the list to cards meant for first-time users.
+3. THE System SHALL store, for each bank: website, cards page, fees page and product disclosure sheet where known; where its data came from (name and address); interest or profit rate tiers; minimum payment rule; late payment charge; cash advance fee; foreign currency fee; service tax; minimum age; income proof the bank lists; typical approval time; and 0% instalment plans.
+4. THE System SHALL store, for each card: bank, name, network (Visa, Mastercard, Amex, UnionPay or not stated), card type (conventional or Islamic), tier, annual fee, annual fee waiver condition, minimum annual income (or a note when it is by invitation or not stated), rewards type with a summary and the highest cashback rate, perks (lounge visits, travel insurance, golf and similar), whether a fixed-deposit-backed option exists and the deposit needed, the card's own page on the bank's website where known, and the date it was last checked.
+5. WHEN a value is not stated by the sources, THE System SHALL store it as empty (null) and SHALL show "Not stated. Ask the bank". THE System SHALL NOT estimate or invent a value.
+6. THE System SHALL let a card override a rule of its bank (for example a fixed 14% rate).
+7. THE System SHALL show on every card detail: the date it was last checked, a link to the card's own bank page (or the bank's cards page or website when there is no own page), links to the bank's fees page and product disclosure sheet where known, and the list of sources the data came from.
+8. THE System SHALL show a note that the data was collected from bank websites and from RinggitPlus on a stated date, that it changes often, and that the user must confirm terms with the bank.
+9. IF a card or bank record is missing a required field, has an unknown value, points to an unknown bank, or has a web address that does not start with http, THEN the logic check script SHALL fail and name the card or bank and the field.
 
 ### 11.2 Disclaimers and neutrality
 
@@ -291,9 +294,9 @@ All content is illustrative. There is no real backend and no real bank offer.
 
 **User story:** As Daniel, I want a simple score, so I can see which cards suit a beginner without reading every detail.
 
-1. THE System SHALL compute a "First-card friendliness" score from 1 to 5 using five equal criteria: low income requirement, flexible income proof, low or waivable annual fee, digital application, and secured option.
+1. THE System SHALL compute a "First-card friendliness" score from 1 to 5. The score starts at 1 and adds up to 1 point for each of four criteria: low income requirement (RM2,000 a month or less), flexible income proof (three or more kinds listed), low or waivable annual fee, and a fixed-deposit-backed option. The result is rounded. A value that is not stated earns no points.
 2. THE System SHALL show how the score is worked out in plain language, and which criteria a card met.
-3. WHEN a card accepts a bank statement or a gig earnings statement as income proof, THE System SHALL show a "Gig-worker friendly" badge.
+3. WHEN the bank lists a bank statement or a gig earnings statement as income proof, THE System SHALL show a "Gig-worker friendly" badge, and SHALL explain that this means the bank lists bank statements (usually for self-employed or commission earners), that it may also ask for tax or business papers, and that a gig worker should check first.
 4. THE System SHALL show the score as a number and a label such as "4 out of 5", not by colour alone.
 
 ### 11.4 Listing, search and sort
@@ -310,7 +313,7 @@ All content is illustrative. There is no real backend and no real bank offer.
 
 ### 11.5 Filters
 
-1. THE System SHALL provide filters for: bank; card type; network; annual fee (free, waivable, paid); rewards type; minimum income (slider); accepts gig income proof; secured card; digital application; student-friendly.
+1. THE System SHALL provide filters for: bank; card type; tier; network (including "not stated"); annual fee (free, waivable, paid, not stated); rewards type; minimum income (slider; cards with no stated income are hidden while the slider is below its maximum); lists bank statements as income proof; fixed-deposit-backed option; and low income or deposit-backed.
 2. WHEN the user applies the "accepts gig income proof" filter, THE System SHALL show only cards that accept a bank statement or a gig earnings statement.
 3. WHEN the user applies several filters, THE System SHALL show only cards that match all of them.
 4. THE System SHALL make every filter usable by keyboard and labelled for screen readers.
@@ -339,7 +342,7 @@ All content is illustrative. There is no real backend and no real bank offer.
 **User story:** As Hafiz, I want the full picture of one card in plain language, so I know what I am signing up for.
 
 1. WHEN the user selects "Details" on a card, THE System SHALL open a detail view (a drawer on wide screens, a full-height sheet on narrow screens).
-2. THE System SHALL show in the detail view: all stored fields grouped as in the compare table, pros and cons, "Who is this card best for?", a plain-language fee explainer, and a "Why this might not suit you" note.
+2. THE System SHALL show in the detail view: all stored fields grouped as in the compare table, perks listed by the bank, "Who is this card best for?" and "Why this might not suit you" (both worked out from the card's facts, not from marketing text), a plain-language fee explainer, and the links and sources described in 11.1.
 3. WHEN the annual fee has a waiver condition, THE System SHALL show the condition in plain language next to the fee, on the listing, the table and the detail view.
 4. WHILE the detail view is open, THE System SHALL trap keyboard focus inside it, close on Escape, and return focus to the button that opened it.
 5. THE System SHALL show "Simulate cost with this card", "Apply with this card" and "Add to compare" in the detail view.
@@ -486,12 +489,21 @@ All content is illustrative. There is no real backend and no real bank offer.
 
 **User story:** As a first-time user, I want cards grouped by tier, so I can tell a basic card from a premium one and pick the level that fits my income.
 
-1. THE System SHALL classify every card by tier: Classic, Gold, Platinum, Secured or Student, using the `tier` field in `cards.json`.
+1. THE System SHALL classify every card by tier: Classic, Gold, Platinum or Premium (Signature, Infinite, World and similar), using the `tier` field in `cards.json`. Secured and Student remain valid tiers but are shown only when a card uses them.
 2. THE System SHALL show the tier as text with a symbol on every card tile, in the compare table column header, and in the card detail.
-3. THE System SHALL provide tier buttons above the card list (All tiers, Classic, Gold, Platinum, Secured, Student), each with the number of cards in it, and the same filter as a drop-down in the filter panel.
+3. THE System SHALL provide tier buttons above the card list (All tiers, then each tier that has at least one card), each with the number of cards in it, and the same filter as a drop-down in the filter panel.
 4. WHEN the user selects a tier, THE System SHALL show only cards in that tier, show a one-sentence plain-language description of the tier, and mark the button as pressed.
 5. WHEN the user selects the pressed tier button again, THE System SHALL clear the tier filter.
 6. THE System SHALL work out each tier count from the search text and all other filters, so the numbers always match what the user would see.
 7. THE System SHALL include a "Card tier" row, with the tier description, in the compare table and the detail view.
 8. THE System SHALL keep the chosen tier when the user switches language or leaves and returns, and clear it with "Clear filters".
 9. THE System SHALL show every tier label and description in English and Bahasa Malaysia.
+### 11.14 Long lists, deposit-backed cards and best match with real data
+
+1. WHILE more than 24 cards match, THE System SHALL show the first 24 and a "Show more" button that adds 24 more, and SHALL return to the first 24 when the search, filters or sort change.
+2. THE System SHALL sort "not stated" values last in every sort. The "best rewards" sort SHALL be named "Highest cashback rate" and SHALL use the highest advertised cashback rate.
+3. THE System SHALL pick the "Best match for me" cards from different banks first, so the list is not all one bank.
+4. WHERE a card has a fixed-deposit-backed option, THE System SHALL include it in the best match when the user falls short on income or income proof, and SHALL say the user would pledge a deposit of the stated size and that the bank still decides.
+5. WHEN a card's own interest, minimum payment or late fee is not stated, THE System SHALL use the standard example figures in the cost simulator and SHALL say which figures it replaced.
+6. WHEN a card has a range of interest rates, THE System SHALL use the highest rate in the simulator, because new cardholders usually start there.
+7. WHEN the app starts with saved choices from an older version, THE System SHALL drop saved card choices and filters that no longer exist.

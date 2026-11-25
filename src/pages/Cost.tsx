@@ -7,7 +7,8 @@ import { SIM_LIMITS } from '../config/rates.ts';
 import { money } from '../lib/format.ts';
 import { DEFAULT_TERMS, simulate, type RepayMode, type SimResult } from '../lib/cost.ts';
 import { findCard } from '../data/cards.ts';
-import { termsFromCard } from '../lib/cards.ts';
+import { missingTerms, termsFromCard } from '../lib/cards.ts';
+import { annualFeeText, cashAdvanceText, fxText, interestText } from '../lib/cardText.ts';
 import { Disclaimer, SelectedCardChip } from '../components/cards.tsx';
 import { Button } from '../components/ui.tsx';
 
@@ -31,7 +32,7 @@ function Scenario({ title, r, spend, highlight }: { title: string; r: SimResult;
         ))}
         <div className="flex items-baseline justify-between gap-3 pt-3">
           <dt className="font-bold">{t(bi('Total you pay', 'Jumlah yang anda bayar'))}</dt>
-          <dd className="text-2xl font-extrabold">{money(r.total, 2)}</dd>
+          <dd className="text-2xl font-bold">{money(r.total, 2)}</dd>
         </div>
       </dl>
       <p className="mt-2 text-sm text-slate-600">{t(bi('You bought', 'Anda beli'))} {money(spend)}.</p>
@@ -45,6 +46,7 @@ export function CostPage() {
   const sim = state.sim;
   const card = findCard(state.selectedCardId);
   const terms = card ? termsFromCard(card) : DEFAULT_TERMS;
+  const missing = card ? missingTerms(card) : { interest: false, minPayment: false, lateFee: false };
   const set = (p: Partial<typeof sim>) => update((s) => ({ ...s, sim: { ...s.sim, ...p } }));
 
   useEffect(() => {
@@ -76,9 +78,19 @@ export function CostPage() {
             <Callout tone="info" title={t(bi('Using this card’s rates', 'Menggunakan kadar kad ini'))}>
               <p>
                 {t(bi(
-                  `Interest ${card.interestPa}% a year. Other fees not in the simulation below: annual fee ${money(card.annualFee)}${card.annualFeeWaiver ? ` (${card.annualFeeWaiver.en.toLowerCase()})` : ''}, cash advance ${card.cashAdvance.percent}% (at least ${money(card.cashAdvance.min)}), foreign currency ${card.fxFeePercent}%.`,
-                  `Faedah ${card.interestPa}% setahun. Yuran lain yang tiada dalam simulasi di bawah: yuran tahunan ${money(card.annualFee)}${card.annualFeeWaiver ? ` (${card.annualFeeWaiver.ms.toLowerCase()})` : ''}, pendahuluan tunai ${card.cashAdvance.percent}% (sekurang-kurangnya ${money(card.cashAdvance.min)}), mata wang asing ${card.fxFeePercent}%.`,
+                  `Interest or profit rate: ${interestText(card).en} a year. The simulation uses ${terms.aprPercent}%, the rate new cardholders usually start at.`,
+                  `Kadar faedah atau keuntungan: ${interestText(card).ms} setahun. Simulasi menggunakan ${terms.aprPercent}%, kadar yang biasanya dikenakan kepada pemegang kad baharu.`,
                 ))}
+              </p>
+              {(missing.interest || missing.minPayment || missing.lateFee) && (
+                <p className="mt-1 font-semibold">
+                  {t(bi('The bank does not state some terms here, so we used standard figures for: ', 'Bank tidak menyatakan beberapa terma di sini, jadi kami guna angka standard untuk: '))}
+                  {[missing.interest && t(bi('interest rate', 'kadar faedah')), missing.minPayment && t(bi('minimum payment', 'bayaran minimum')), missing.lateFee && t(bi('late fee', 'fi lewat'))].filter(Boolean).join(', ')}.
+                </p>
+              )}
+              <p className="mt-1">
+                {t(bi('Charges not in the simulation: ', 'Caj yang tiada dalam simulasi: '))}
+                {t(bi('annual fee', 'yuran tahunan'))} {t(annualFeeText(card))}; {t(bi('cash advance', 'pendahuluan tunai'))} {t(cashAdvanceText(card))}; {t(bi('foreign currency', 'mata wang asing'))} {t(fxText(card))}.
               </p>
               <div className="mt-3">
                 <Button variant="secondary" onClick={() => patch({ selectedCardId: null })}>{t(bi('Use standard rates', 'Guna kadar standard'))}</Button>
@@ -97,7 +109,7 @@ export function CostPage() {
       <Card className="mb-6 space-y-6">
         <div>
           <label htmlFor="spend" className="block text-lg font-semibold">{t(bi('How much do you spend?', 'Berapa banyak anda belanja?'))}</label>
-          <p className="my-1 text-4xl font-extrabold text-cyan-800">{money(sim.spend)}</p>
+          <p className="my-1 text-4xl font-bold text-cyan-800">{money(sim.spend)}</p>
           <input id="spend" type="range" min={SIM_LIMITS.spendMin} max={SIM_LIMITS.spendMax} step={SIM_LIMITS.spendStep} value={sim.spend} onChange={(e) => set({ spend: Number(e.target.value) })} className="h-12 w-full" aria-valuetext={money(sim.spend)} />
           <div className="flex justify-between text-sm text-slate-600"><span>{money(SIM_LIMITS.spendMin)}</span><span>{money(SIM_LIMITS.spendMax)}</span></div>
         </div>

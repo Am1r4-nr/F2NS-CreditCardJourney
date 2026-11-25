@@ -85,6 +85,8 @@ export interface UseState {
   reminderOn: boolean;
   daysBefore: DaysBefore;
   quiz: (number | null)[];
+  /** Ids of the first-3-months checklist items that are ticked. */
+  guide?: string[];
 }
 
 export interface WorkshopEntry {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { bi, useLang } from '../i18n/index.tsx';
 import { useApp } from '../state/store.tsx';
 import { Button, Callout, PageTitle } from '../components/ui.tsx';
@@ -9,6 +9,7 @@ import { CardDetail, CompareBar, CompareTable } from '../components/compare.tsx'
 import type { CompareState } from '../state/types.ts';
 
 const MAX_COMPARE = 3;
+const PAGE_SIZE = 24;
 
 export function ComparePage() {
   const { t } = useLang();
@@ -19,6 +20,7 @@ export function ComparePage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [announce, setAnnounce] = useState('');
   const [limitMsg, setLimitMsg] = useState(false);
+  const [limit, setLimit] = useState(PAGE_SIZE);
 
   const setCmp = (fn: (c: CompareState) => CompareState) => update((s) => ({ ...s, compare: fn(s.compare) }));
   const setFilters = (p: Partial<Filters>) => setCmp((c) => ({ ...c, filters: { ...c.filters, ...p } }));
@@ -68,8 +70,12 @@ export function ComparePage() {
     { id: 'fee', label: bi('Lowest annual fee', 'Yuran tahunan terendah') },
     { id: 'rate', label: bi('Lowest interest rate', 'Kadar faedah terendah') },
     { id: 'income', label: bi('Lowest minimum income', 'Pendapatan minimum terendah') },
-    { id: 'rewards', label: bi('Best rewards', 'Ganjaran terbaik') },
+    { id: 'rewards', label: bi('Highest cashback rate', 'Kadar tunai balik tertinggi') },
   ];
+
+  // Start again from the first page when the search, filters or sort change.
+  const resetKey = `${cmp.query}|${cmp.sort}|${JSON.stringify(cmp.filters)}`;
+  useEffect(() => setLimit(PAGE_SIZE), [resetKey]);
 
   const manyTip = cmp.selected.length >= MAX_COMPARE || cmp.log.viewed.length > 3;
 
@@ -113,7 +119,7 @@ export function ComparePage() {
               <button type="button" aria-pressed={cmp.filters.tier === ''} onClick={() => setFilters({ tier: '' })} className={`min-h-11 rounded-full border-2 px-4 text-sm font-bold ${cmp.filters.tier === '' ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-300 bg-white text-slate-800'}`}>
                 {t(bi('All tiers', 'Semua tahap'))} ({totalInTiers})
               </button>
-              {TIER_ORDER.map((k) => {
+              {TIER_ORDER.filter((k) => counts[k] > 0 || cmp.filters.tier === k).map((k) => {
                 const on = cmp.filters.tier === k;
                 return (
                   <button key={k} type="button" aria-pressed={on} onClick={() => setFilters({ tier: on ? '' : k })} className={`min-h-11 rounded-full border-2 px-4 text-sm font-bold ${on ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-300 bg-white text-slate-800'}`}>
@@ -132,7 +138,7 @@ export function ComparePage() {
                 type="search"
                 value={cmp.query}
                 onChange={(e) => setCmp((c) => ({ ...c, query: e.target.value }))}
-                placeholder={t(bi('e.g. Maybank or Secured', 'cth. Maybank atau Bercagar'))}
+                placeholder={t(bi('e.g. Maybank or Visa Infinite', 'cth. Maybank atau Visa Infinite'))}
                 className="min-h-12 w-full rounded-xl border-2 border-slate-400 bg-white px-4 text-base"
               />
             </div>
@@ -157,7 +163,7 @@ export function ComparePage() {
           </p>
 
           <p className="mb-3 font-semibold" aria-live="polite">
-            {t(bi(`Showing ${results.length} of ${CARDS.length} cards`, `Menunjukkan ${results.length} daripada ${CARDS.length} kad`))}
+            {t(bi(`${results.length} of ${CARDS.length} cards match. Showing ${Math.min(limit, results.length)}.`, `${results.length} daripada ${CARDS.length} kad sepadan. Menunjukkan ${Math.min(limit, results.length)}.`))}
           </p>
 
           {limitMsg && (
@@ -172,15 +178,22 @@ export function ComparePage() {
             <div role="status" className="rounded-3xl border-2 border-dashed border-slate-300 bg-white p-8 text-center">
               <p className="text-4xl" aria-hidden="true">🔍</p>
               <h3 className="mt-2 text-xl font-extrabold">{t(bi('No cards match yet', 'Belum ada kad yang sepadan'))}</h3>
-              <p className="mx-auto mt-1 max-w-md text-lg text-slate-700">{t(bi('Try fewer filters or a different search. Nothing is wrong. We just have a small sample list.', 'Cuba kurangkan penapis atau carian lain. Tiada yang salah. Kami cuma ada senarai contoh yang kecil.'))}</p>
+              <p className="mx-auto mt-1 max-w-md text-lg text-slate-700">{t(bi('Try fewer filters or a different search. Nothing is wrong. Some cards are not in our list yet.', 'Cuba kurangkan penapis atau carian lain. Tiada yang salah. Sesetengah kad belum ada dalam senarai kami.'))}</p>
               <Button className="mt-4" onClick={clearFilters}>{t(bi('Clear filters', 'Kosongkan penapis'))}</Button>
             </div>
           ) : (
             <ul className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-              {results.map((c) => (
+              {results.slice(0, limit).map((c) => (
                 <CardTile key={c.id} card={c} selected={cmp.selected.includes(c.id)} onToggle={toggle} onDetails={(id) => openDetails(id)} />
               ))}
             </ul>
+          )}
+          {results.length > limit && (
+            <div className="mt-6 text-center">
+              <Button variant="secondary" onClick={() => { setLimit((n) => n + PAGE_SIZE); setAnnounce(t(bi('More cards shown.', 'Lebih banyak kad dipaparkan.'))); }}>
+                {t(bi(`Show ${Math.min(PAGE_SIZE, results.length - limit)} more`, `Tunjuk ${Math.min(PAGE_SIZE, results.length - limit)} lagi`))}
+              </Button>
+            </div>
           )}
         </section>
       </div>

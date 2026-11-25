@@ -35,6 +35,7 @@ export const MAIN_NAV: { route: Route; label: ReturnType<typeof bi> }[] = [
   { route: 'apply', label: bi('Apply', 'Mohon') },
   { route: 'track', label: bi('Track', 'Jejak') },
   { route: 'use', label: bi('Use it well', 'Guna dengan bijak') },
+  { route: 'learn', label: bi('Learn', 'Belajar') },
   { route: 'pricing', label: bi('Pricing', 'Harga') },
 ];
 
@@ -52,10 +53,10 @@ export function Header({ route }: { route: Route }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-white/60 bg-white/55 backdrop-blur-md">
       <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-2 px-4 sm:px-8 lg:px-12 py-2">
-        <a href={href('home')} className="flex min-h-11 items-center gap-2 rounded-lg text-xl font-extrabold text-cyan-800">
-          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-cyan-600 to-teal-500 text-white">K</span>
+        <a href={href('home')} className="flex min-h-11 items-center gap-2 rounded-lg text-xl font-bold text-cyan-800">
+          <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl border-[1.5px] border-cyan-700 bg-white/50 text-base font-bold text-cyan-700">K</span>
           KAF First Card
         </a>
         <div className="flex items-center gap-2">
@@ -185,7 +186,7 @@ export function ScamNote() {
 export function Footer() {
   const { t } = useLang();
   return (
-    <footer className="mt-12 border-t border-slate-200 bg-white">
+    <footer className="mt-12 border-t border-white/60 bg-white/55 backdrop-blur-md">
       <div className="mx-auto max-w-screen-2xl space-y-4 px-4 sm:px-8 lg:px-12 py-8">
         <TrustStrip />
         <ScamNote />
@@ -207,7 +208,7 @@ export function Footer() {
 }
 
 /** Chat or call, available on every screen. */
-export function HelpWidget({ lifted }: { lifted: boolean }) {
+export function HelpWidget({ lifted, demo = false }: { lifted: boolean; demo?: boolean }) {
   const { t } = useLang();
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<{ from: 'me' | 'bot'; text: string }[]>([]);
@@ -243,7 +244,7 @@ export function HelpWidget({ lifted }: { lifted: boolean }) {
   }
 
   return (
-    <div className={`fixed right-4 z-40 ${lifted ? 'bottom-28 sm:bottom-24' : 'bottom-4'}`}>
+    <div className={`fixed right-4 z-40 ${demo ? 'bottom-72 sm:bottom-60' : lifted ? 'bottom-28 sm:bottom-24' : 'bottom-4'}`}>
       {open && (
         <div ref={panel} role="dialog" aria-label={t(bi('Get help', 'Dapatkan bantuan'))} className="mb-2 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-slate-200 bg-white p-4 shadow-xl">
           <div className="flex items-center justify-between">
