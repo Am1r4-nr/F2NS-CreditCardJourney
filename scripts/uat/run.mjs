@@ -37,12 +37,23 @@ const nextBtn = (p) => p.getByRole('button', { name: /^Next$/ });
 const hasText = async (p, re) => (await p.locator('main').innerText()).match(re) !== null;
 const must = (cond, msg) => { if (!cond) throw new Error(msg); };
 
+/** Signs up from the account gate that Apply shows. */
+async function signUpHere(p, email = `uat${Date.now()}@example.com`, name = 'Hafiz Tester') {
+  await p.getByLabel('Your name').fill(name);
+  await p.getByLabel('Email address').fill(email);
+  await p.getByLabel('Password').fill('correct horse 9');
+  await p.getByRole('checkbox').check();
+  await p.getByRole('button', { name: /Create account and continue/ }).click();
+  return email;
+}
 /** Fills the apply wizard from the identity step to the review page. */
 async function applyToReview(p, step, { camera = true, proof = 'bank' } = {}) {
   await step('Open Apply and start', async () => {
     await go(p, 'apply');
     await expectText(p, /document checklist/i);
     await p.getByRole('button', { name: 'I am ready. Start' }).click();
+    await expectText(p, /Create your account to apply/);
+    await signUpHere(p);
     await expectText(p, /Step 1 of 5/);
   });
   await step('Step 1 identity', async () => {
@@ -209,6 +220,7 @@ await scenario('UAT-03', 'Apply without a camera: type details by hand, validati
   await step('Typed identity works', async () => {
     await go(p, 'apply');
     await p.getByRole('button', { name: 'I am ready. Start' }).click();
+    await signUpHere(p);
     await p.getByRole('button', { name: /Type my details/ }).click();
     await expectText(p, /Full name/i);
   });
@@ -358,7 +370,7 @@ await scenario('UAT-08', 'Workshop: tester saves a preference card and sees it i
 
 // ---------------------------------------------------------------- UAT-09
 await scenario('UAT-09', 'Every page loads with a heading and no script errors', async (p, step) => {
-  for (const r of ['', 'ready', 'compare', 'cost', 'apply', 'track', 'use', 'learn', 'pricing', 'trust', 'workshop']) {
+  for (const r of ['', 'ready', 'compare', 'cost', 'apply', 'track', 'use', 'learn', 'pricing', 'trust', 'workshop', 'account']) {
     await step('Route /' + r, async () => {
       await go(p, r);
       must((await p.locator('h1').count()) >= 1, 'no h1');
@@ -388,6 +400,74 @@ await scenario('UAT-11', 'Help button: opens chat/call options on every page', a
   });
 });
 
+// ---------------------------------------------------------------- UAT-12
+await scenario('UAT-12', 'Account: applying needs a sign-up, answers are saved to the account', async (p, step) => {
+  let email;
+  await step('Start applying without an account shows the sign-up form', async () => {
+    await go(p, 'apply');
+    await p.getByRole('button', { name: 'I am ready. Start' }).click();
+    await expectText(p, /Create your account to apply/);
+    must((await p.getByText(/Step 1 of 5/).count()) === 0, 'wizard visible without an account');
+  });
+  await step('Sign-up checks name, email, password and the tick box', async () => {
+    await p.getByRole('button', { name: /Create account and continue/ }).click();
+    await p.waitForTimeout(300);
+    must((await p.locator('[role=alert]').count()) >= 3, 'expected several errors');
+    await p.getByLabel('Your name').fill('Hafiz');
+    await p.getByLabel('Email address').fill('not-an-email');
+    await p.getByLabel('Password').fill('short');
+    await p.getByRole('button', { name: /Create account and continue/ }).click();
+    await p.waitForTimeout(300);
+    must(await hasText(p, /valid email/i) && await hasText(p, /at least 8/i), 'email/password errors missing');
+  });
+  await step('Valid sign-up opens the wizard; header shows the name', async () => {
+    email = `uat${Date.now()}@example.com`;
+    await p.getByLabel('Email address').fill(email);
+    await p.getByLabel('Password').fill('correct horse 9');
+    await p.getByRole('checkbox').check();
+    await p.getByRole('button', { name: /Create account and continue/ }).click();
+    await expectText(p, /Step 1 of 5/);
+    must((await p.locator('header a', { hasText: 'Hafiz' }).count()) === 1, 'name not in header');
+  });
+  await step('Answers are saved: save, log out, log in, answers are back', async () => {
+    await p.getByRole('button', { name: /Scan MyKad/ }).click();
+    await expectText(p, /Mohd Hafiz bin Abdullah/);
+    await nextBtn(p).click();
+    await p.getByLabel(/mobile number/i).fill('012-345 6789');
+    await p.getByRole('button', { name: /Save and continue later/ }).click();
+    await p.waitForTimeout(300);
+    await go(p, 'account');
+    await p.getByRole('button', { name: 'Log out' }).click();
+    await p.waitForURL(/#\/$|#\/?$/);
+    must((await p.locator('header a', { hasText: 'Log in' }).count()) === 1, 'still signed in');
+    await go(p, 'account');
+    await p.getByRole('tab', { name: /I have an account/ }).click();
+    await p.getByLabel('Email address').fill(email);
+    await p.getByLabel('Password').fill('wrong password');
+    await p.getByRole('button', { name: /Log in and continue/ }).click();
+    await expectText(p, /email or password is not right/i);
+    await p.getByLabel('Password').fill('correct horse 9');
+    await p.getByRole('button', { name: /Log in and continue/ }).click();
+    await p.waitForURL(/#\/apply/);
+    const cont = p.getByRole('button', { name: /Continue my saved application/ });
+    if (await cont.count()) await cont.click();
+    await expectText(p, /Step 2 of 5/);
+    await expectText(p, /012-345 6789/).catch(() => {});
+    const val = await p.getByLabel(/mobile number/i).inputValue();
+    must(val === '012-345 6789', 'saved phone not restored: ' + val);
+  });
+  await step('Same email cannot sign up twice', async () => {
+    await go(p, 'account');
+    await p.getByRole('button', { name: 'Log out' }).click();
+    await go(p, 'account');
+    await p.getByLabel('Your name').fill('Someone');
+    await p.getByLabel('Email address').fill(email);
+    await p.getByLabel('Password').fill('another pass 1');
+    await p.getByRole('checkbox').check();
+    await p.getByRole('button', { name: /Create account and continue/ }).click();
+    await expectText(p, /already an account/i);
+  });
+});
 await browser.close();
 
 let failed = 0;

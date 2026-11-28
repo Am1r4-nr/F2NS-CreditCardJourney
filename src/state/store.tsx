@@ -3,6 +3,7 @@ import { RATES, SIM_LIMITS } from '../config/rates.ts';
 import type { AppState, CompareState, Draft, Outcome } from './types.ts';
 import { DEFAULT_FILTERS } from '../lib/cards.ts';
 import { CARDS } from '../data/cards.ts';
+import { loadUserData, saveUserData, type Account } from '../lib/account.ts';
 import { HAFIZ_CONTACT, MOCK_IDENTITY, PERSONAS } from './personas.ts';
 
 const KEY = 'kaf-first-card-v1';
@@ -35,6 +36,7 @@ export function initialState(): AppState {
   const stored = typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('ms');
   return {
     lang: stored ? 'ms' : 'en',
+    account: null,
     demo: false,
     walkStep: 0,
     walkStartedAt: null,
@@ -55,11 +57,18 @@ export function initialState(): AppState {
 }
 
 function load(): AppState {
-  const base = initialState();
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return base;
-    const parsed = JSON.parse(raw) as Partial<AppState>;
+    return raw ? hydrate(JSON.parse(raw) as Partial<AppState>) : initialState();
+  } catch {
+    return initialState();
+  }
+}
+
+/** Turns saved data into a full, safe state. Unknown or old fields fall back to defaults. */
+function hydrate(parsed: Partial<AppState>): AppState {
+  const base = initialState();
+  try {
     const known = new Set(CARDS.map((c) => c.id));
     const keep = (ids: unknown): string[] => (Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string' && known.has(x)) : []);
     // Filters saved by an older version of the page (they had a digital key) are dropped.
@@ -125,6 +134,9 @@ interface Ctx {
   patchDraft: (p: Partial<Draft>) => void;
   setOutcome: (o: Outcome) => void;
   resetAll: () => void;
+  /** Signs in. Brings back what this account saved, or keeps what the visitor has done so far. */
+  signInAs: (account: Account) => void;
+  signOut: () => void;
 }
 
 const AppContext = createContext<Ctx | null>(null);
@@ -144,15 +156,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = state.lang === 'ms' ? 'ms' : 'en';
   }, [state.lang]);
 
+  // While signed in, the whole journey is also saved under the account.
+  useEffect(() => {
+    if (state.account) saveUserData(state.account.email, state);
+  }, [state]);
+
   const update = useCallback((fn: (s: AppState) => AppState) => setState(fn), []);
   const patch = useCallback((p: Partial<AppState>) => setState((s) => ({ ...s, ...p })), []);
   const patchDraft = useCallback((p: Partial<Draft>) => setState((s) => ({ ...s, draft: { ...s.draft, ...p } })), []);
   const setOutcome = useCallback((outcome: Outcome) => setState((s) => ({ ...s, track: { ...s.track, outcome } })), []);
   const resetAll = useCallback(() => {
+    setState((s) => ({ ...initialState(), lang: s.lang, entries: s.entries, account: s.account }));
+  }, []);
+
+  const signInAs = useCallback((account: Account) => {
+    setState((s) => {
+      const saved = loadUserData(account.email);
+      return saved ? { ...hydrate(saved as Partial<AppState>), lang: s.lang, account } : { ...s, account };
+    });
+  }, []);
+  /** Signing out clears the answers from this screen. They stay saved under the account. */
+  const signOut = useCallback(() => {
     setState((s) => ({ ...initialState(), lang: s.lang, entries: s.entries }));
   }, []);
 
-  const value = useMemo(() => ({ state, update, patch, patchDraft, setOutcome, resetAll }), [state, update, patch, patchDraft, setOutcome, resetAll]);
+  const value = useMemo(() => ({ state, update, patch, patchDraft, setOutcome, resetAll, signInAs, signOut }), [state, update, patch, patchDraft, setOutcome, resetAll, signInAs, signOut]);
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 

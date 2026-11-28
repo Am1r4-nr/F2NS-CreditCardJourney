@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
-export type Route = 'home' | 'ready' | 'compare' | 'cost' | 'apply' | 'track' | 'use' | 'learn' | 'pricing' | 'trust' | 'workshop';
+export type Route = 'home' | 'ready' | 'compare' | 'cost' | 'apply' | 'track' | 'use' | 'learn' | 'pricing' | 'trust' | 'workshop' | 'account';
 
-export const ROUTES: Route[] = ['home', 'ready', 'compare', 'cost', 'apply', 'track', 'use', 'learn', 'pricing', 'trust', 'workshop'];
+export const ROUTES: Route[] = ['home', 'ready', 'compare', 'cost', 'apply', 'track', 'use', 'learn', 'pricing', 'trust', 'workshop', 'account'];
 
 function segments(): string[] {
   return window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);

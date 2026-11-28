@@ -100,6 +100,7 @@ const MORE_NAV: { route: Route; label: ReturnType<typeof bi> }[] = [
   { route: 'pricing', label: bi('Pricing', 'Harga') },
   { route: 'trust', label: bi('Trust and safety', 'Kepercayaan') },
   { route: 'workshop', label: bi('Workshop', 'Bengkel') },
+  { route: 'account', label: bi('My account', 'Akaun saya') },
 ];
 
 const ICON_PATHS: Record<Route, string> = {
@@ -114,6 +115,7 @@ const ICON_PATHS: Record<Route, string> = {
   pricing: 'M4 4h8l8 8-8 8-8-8z',
   trust: 'M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z',
   workshop: 'M5 20V9l7-5 7 5v11M10 20v-6h4v6',
+  account: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6',
 };
 
 function NavIcon({ route }: { route: Route }) {
@@ -252,6 +254,9 @@ export function Header({ route }: { route: Route }) {
           >
             {t(bi('Guide', 'Panduan'))}
           </button>
+          <a href={href('account')} className="inline-flex min-h-11 items-center rounded-full border-2 border-white/80 px-4 text-sm font-bold text-white hover:bg-white/10">
+            {state.account ? state.account.name.split(' ')[0] : t(bi('Log in', 'Log masuk'))}
+          </a>
           <div role="group" aria-label={t(bi('Language', 'Bahasa'))} className="flex overflow-hidden rounded-full border-2 border-white">
             {(['en', 'ms'] as const).map((l) => (
               <button

@@ -1,3 +1,4 @@
+import type { Account } from '../lib/account.ts';
 import type { Bi, IncomeType, Lang, ReadyInput } from '../lib/eligibility.ts';
 import type { SimInput, RepayMode } from '../lib/cost.ts';
 import type { Filters, SortKey } from '../lib/cards.ts';
@@ -121,6 +122,8 @@ export type StageKey = 'ready' | 'cost' | 'apply' | 'track' | 'use';
 
 export interface AppState {
   lang: Lang;
+  /** The signed-in prototype account, or null. Applying needs one, so the answers can be saved. */
+  account: Account | null;
   demo: boolean;
   walkStep: number;
   walkStartedAt: number | null;

@@ -12,6 +12,7 @@ import { findCard } from '../data/cards.ts';
 import { parseAmount } from '../lib/format.ts';
 import { submitApplication } from '../lib/mockApi.ts';
 import { useMedia } from '../lib/useMedia.ts';
+import { AuthPanel } from '../components/auth.tsx';
 
 export function ApplyPage() {
   const { t } = useLang();
@@ -19,6 +20,7 @@ export function ApplyPage() {
   const draft = state.draft;
   const card = findCard(state.selectedCardId);
   const isDesktop = useMedia('(min-width: 768px)');
+  const [needAccount, setNeedAccount] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [touched, setTouched] = useState<Set<QId>>(new Set());
   const [saved, setSaved] = useState(false);
@@ -52,17 +54,34 @@ export function ApplyPage() {
     );
   }
 
+  function beginApplication() {
+    const fromReady = state.readyDone && draft.income === '';
+    patchDraft({
+      started: true,
+      q: draft.savedAt !== null ? draft.q : 0,
+      ...(fromReady ? { employment: state.ready.incomeType, income: state.ready.income, commitments: state.ready.commitments } : {}),
+    });
+  }
+
+  // ----- Sign up first, so the answers can be saved -----
+  if (!state.account && (needAccount || draft.started)) {
+    return (
+      <div className="max-w-xl space-y-6">
+        <PageTitle
+          title={t(bi('Create your account to apply', 'Daftar akaun untuk memohon'))}
+          intro={t(bi('An account saves your answers as you go. If you stop, you can log in later and carry on where you left off.', 'Akaun menyimpan jawapan anda semasa anda isi. Jika anda berhenti, anda boleh log masuk kemudian dan sambung dari tempat anda berhenti.'))}
+        />
+        <AuthPanel onDone={() => { setNeedAccount(false); if (!draft.started) beginApplication(); }} />
+        <Button variant="ghost" onClick={() => { setNeedAccount(false); patchDraft({ started: false }); }}>{t(bi('Back to the checklist', 'Kembali ke senarai semak'))}</Button>
+      </div>
+    );
+  }
+
   // ----- Intro: checklist first -----
   if (!draft.started) {
     const hasSaved = draft.savedAt !== null;
-    const start = () => {
-      const fromReady = state.readyDone && draft.income === '';
-      patchDraft({
-        started: true,
-        q: hasSaved ? draft.q : 0,
-        ...(fromReady ? { employment: state.ready.incomeType, income: state.ready.income, commitments: state.ready.commitments } : {}),
-      });
-    };
+    const start = () => (state.account ? beginApplication() : setNeedAccount(true));
+
     return (
       <div className="space-y-6">
         <PageTitle

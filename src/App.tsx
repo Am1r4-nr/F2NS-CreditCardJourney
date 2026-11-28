@@ -13,6 +13,7 @@ import { LearnPage } from './pages/Learn.tsx';
 import { PricingPage } from './pages/Pricing.tsx';
 import { TrustPage } from './pages/Trust.tsx';
 import { WorkshopPage } from './pages/Workshop.tsx';
+import { AccountPage } from './pages/Account.tsx';
 import { Walkthrough } from './components/demo.tsx';
 import { Sheet } from './components/ui.tsx';
 
@@ -30,6 +31,7 @@ const PAGES: Partial<Record<Route, () => ReactElement>> = {
   pricing: PricingPage,
   trust: TrustPage,
   workshop: WorkshopPage,
+  account: AccountPage,
 };
 
 export function App() {
