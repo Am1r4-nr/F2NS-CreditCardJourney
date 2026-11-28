@@ -427,7 +427,7 @@ await scenario('UAT-12', 'Account: applying needs a sign-up, answers are saved t
     await p.getByRole('checkbox').check();
     await p.getByRole('button', { name: /^Create account/ }).click();
     await expectText(p, /Step 1 of 5/);
-    must((await p.locator('header a', { hasText: 'Hafiz' }).count()) === 1, 'name not in header');
+    must((await p.locator('header a[aria-label^="Profile"]').count()) === 1, 'name not in header');
   });
   await step('Answers are saved: save, log out, log in, answers are back', async () => {
     await p.getByRole('button', { name: /Scan MyKad/ }).click();
@@ -466,6 +466,160 @@ await scenario('UAT-12', 'Account: applying needs a sign-up, answers are saved t
     await p.getByRole('checkbox').check();
     await p.getByRole('button', { name: /^Create account/ }).click();
     await expectText(p, /already an account/i);
+  });
+});
+// ---------------------------------------------------------------- UAT-13
+await scenario('UAT-13', 'Continue with Google (simulated): signs up, signs in again, and cannot be used with a password', async (p, step) => {
+  await step('Google button is on the sign-up page and signs the user in', async () => {
+    await go(p, 'account');
+    await p.getByRole('button', { name: /Continue with Google/ }).click();
+    await p.waitForURL(/#\/apply/);
+    must((await p.locator('header a[aria-label^="Profile"]').count()) === 1, 'name not in header');
+  });
+  await step('Log out, then Google again returns to the same account', async () => {
+    await go(p, 'account');
+    await p.getByRole('button', { name: 'Log out' }).click();
+    await go(p, 'account');
+    await p.getByRole('button', { name: /Continue with Google/ }).click();
+    await p.waitForURL(/#\/apply/);
+    const accounts = await p.evaluate(() => JSON.parse(localStorage.getItem('kaf-accounts-v1') ?? '[]').length);
+    must(accounts === 1, 'duplicate accounts: ' + accounts);
+  });
+  await step('The password form cannot log into a Google account', async () => {
+    await go(p, 'account');
+    await p.getByRole('button', { name: 'Log out' }).click();
+    await go(p, 'account');
+    await p.getByRole('tab', { name: /I have an account/ }).click();
+    await p.getByLabel('Email address').fill('sample.user@gmail.example');
+    await p.getByLabel('Password').fill('anything at all');
+    await p.getByRole('button', { name: /^Log in/ }).click();
+    await expectText(p, /uses Google/i);
+  });
+});
+// ---------------------------------------------------------------- UAT-14
+await scenario('UAT-14', 'Profile page with settings: name, password, language, larger text, reminders, clear and delete', async (p, step) => {
+  let email;
+  await step('Profile asks a signed-out visitor to log in', async () => {
+    await go(p, 'account');
+    await expectText(p, /Create your account/);
+  });
+  await step('Sign up and open the profile', async () => {
+    email = `uat${Date.now()}@example.com`;
+    await p.getByLabel('Your name').fill('Hafiz Tester');
+    await p.getByLabel('Email address').fill(email);
+    await p.getByLabel('Password').fill('correct horse 9');
+    await p.getByRole('checkbox').check();
+    await p.getByRole('button', { name: /^Create account/ }).click();
+    await go(p, 'account');
+    await expectText(p, /Overview/);
+    must(await hasText(p, /My activity/), 'overview content missing');
+    await p.getByRole('tab', { name: 'Account' }).click();
+    await expectText(p, /Your name/);
+  });
+  await step('Change name', async () => {
+    await p.getByLabel('Your name').fill('Hafiz Renamed');
+    await p.getByRole('button', { name: 'Save name' }).click();
+    await p.getByText('Saved.').waitFor();
+    must((await p.locator('header a[aria-label="Profile: Hafiz Renamed"]').count()) === 1, 'header not updated');
+  });
+  await step('Change password: wrong current is refused, right one works, old one stops working', async () => {
+    await p.getByRole('tab', { name: 'Password' }).click();
+    await p.getByLabel('Current password').fill('nope nope nope');
+    await p.getByLabel('New password').fill('brand new pass 7');
+    await p.getByRole('button', { name: 'Change password' }).click();
+    await expectText(p, /current password is not right/i);
+    await p.getByLabel('Current password').fill('correct horse 9');
+    await p.getByRole('button', { name: 'Change password' }).click();
+    await expectText(p, /password was changed/i);
+  });
+  await step('Larger text grows the page and survives a reload', async () => {
+    await p.getByRole('tab', { name: 'Display and language' }).click();
+    await p.getByRole('switch', { name: 'Larger text' }).click();
+    const size = await p.evaluate(() => getComputedStyle(document.documentElement).fontSize);
+    must(size === '19px', 'font size ' + size);
+    await p.reload();
+    must((await p.evaluate(() => getComputedStyle(document.documentElement).fontSize)) === '19px', 'not kept after reload');
+  });
+  await step('Language switch to Bahasa Malaysia', async () => {
+    await p.getByRole('tab', { name: /Display and language|Paparan dan bahasa/ }).click();
+    await p.getByRole('button', { name: 'Bahasa Malaysia' }).click();
+    await expectText(p, /Profil saya/);
+    await p.getByRole('button', { name: 'English' }).click();
+  });
+  await step('Reminders: switch on and pick days', async () => {
+    await p.getByRole('tab', { name: 'Payment reminders' }).click();
+    const sw = p.getByRole('switch', { name: 'Payment reminders' });
+    await sw.click();
+    must((await sw.getAttribute('aria-checked')) === 'true', 'switch not on');
+    await p.getByLabel('Days before the due date').selectOption('5');
+    const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('kaf-first-card-v1')).use);
+    must(saved.reminderOn === true && saved.daysBefore === 5, JSON.stringify(saved));
+  });
+  await step('Clear my data asks first, then clears but stays signed in', async () => {
+    await p.getByRole('tab', { name: 'Your data' }).click();
+    await p.getByRole('button', { name: 'Clear', exact: true }).click();
+    await expectText(p, /Clear your application and activity\?/);
+    await p.getByRole('button', { name: 'Yes, clear it' }).click();
+    must((await p.locator('header a[aria-label^="Profile"]').count()) === 1, 'signed out by clearing');
+  });
+  await step('Delete account asks first, removes the account and signs out', async () => {
+    await p.getByRole('button', { name: 'Delete', exact: true }).click();
+    await p.getByRole('button', { name: 'Keep it' }).click();
+    must((await p.locator('header a[aria-label^="Profile"]').count()) === 1, 'deleted despite Keep it');
+    await p.getByRole('button', { name: 'Delete', exact: true }).click();
+    await p.getByRole('button', { name: 'Yes, delete my account' }).click();
+    await p.waitForURL(/#\/$|#\/?$/);
+    const left = await p.evaluate((e) => JSON.parse(localStorage.getItem('kaf-accounts-v1') ?? '[]').some((a) => a.email === e), email);
+    must(left === false, 'account record still there');
+  });
+});
+// ---------------------------------------------------------------- UAT-15
+await scenario('UAT-15', 'Credit score tracking: add scores, see the trend, remove one, keep after reload', async (p, step) => {
+  await step('Sign up and open the Credit score tab', async () => {
+    await go(p, 'account');
+    await p.getByRole('button', { name: /Continue with Google/ }).click();
+    await go(p, 'account');
+    await p.getByRole('tab', { name: 'Credit score' }).click();
+    await expectText(p, /We cannot see your credit score/);
+    must(await hasText(p, /No scores yet/), 'empty state missing');
+  });
+  await step('Bad scores are refused', async () => {
+    for (const bad of ['', 'abc', '200', '900']) {
+      await p.getByLabel('Score', { exact: true }).fill(bad);
+      await p.getByRole('button', { name: 'Add score' }).click();
+      await p.waitForTimeout(150);
+      must((await p.locator('[role=alert]').count()) >= 1, 'no error for "' + bad + '"');
+    }
+    must(await hasText(p, /No scores yet/), 'a bad score was saved');
+  });
+  await step('First score shows without a change', async () => {
+    await p.getByLabel('Date checked').fill('2026-09-01');
+    await p.getByLabel('Score', { exact: true }).fill('650');
+    await p.getByRole('button', { name: 'Add score' }).click();
+    await expectText(p, /Latest score/);
+    must(await hasText(p, /Add another check later/), 'single-score message missing');
+  });
+  await step('Second score shows the rise', async () => {
+    await p.getByLabel('Date checked').fill('2026-11-01');
+    await p.getByLabel('Score', { exact: true }).fill('690');
+    await p.getByRole('button', { name: 'Add score' }).click();
+    await expectText(p, /Up 40 since your last check/);
+    must((await p.locator('svg[role=img] circle').count()) === 2, 'chart should have 2 dots');
+  });
+  await step('A lower, later score shows the fall', async () => {
+    await p.getByLabel('Date checked').fill('2026-11-10');
+    await p.getByLabel('Score', { exact: true }).fill('670');
+    await p.getByRole('button', { name: 'Add score' }).click();
+    await expectText(p, /Down 20 since your last check/);
+  });
+  await step('Scores are kept after a reload', async () => {
+    await p.reload();
+    await p.getByRole('tab', { name: 'Credit score' }).click();
+    must((await p.locator('svg[role=img] circle').count()) === 3, 'history lost');
+  });
+  await step('Remove the newest score goes back to the earlier trend', async () => {
+    await p.getByRole('button', { name: /Remove score 670/ }).click();
+    await expectText(p, /Up 40 since your last check/);
   });
 });
 await browser.close();

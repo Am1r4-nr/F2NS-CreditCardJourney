@@ -3,6 +3,7 @@ import { bi, useLang } from '../i18n/index.tsx';
 import { useApp } from '../state/store.tsx';
 import { MIN_PASSWORD, logIn, signUp, validateSignUp, type SignUpErrors } from '../lib/account.ts';
 import { Callout, Field, Spinner, inputClass } from './ui.tsx';
+import { GoogleButton } from './GoogleButton.tsx';
 
 type Mode = 'signup' | 'login';
 
@@ -81,6 +82,13 @@ export function AuthPanel({ onDone, initialMode = 'signup', reason }: { onDone?:
                 ? t(bi('Free. It takes about a minute.', 'Percuma. Mengambil masa kira-kira seminit.'))
                 : t(bi('Log in to pick up where you stopped.', 'Log masuk untuk sambung dari tempat anda berhenti.'))}
           </p>
+        </div>
+
+        <GoogleButton onDone={onDone} />
+        <div className="flex items-center gap-3 text-sm text-slate-700" aria-hidden="true">
+          <span className="h-px flex-1 bg-slate-300" />
+          {t(bi('or continue with email', 'atau teruskan dengan e-mel'))}
+          <span className="h-px flex-1 bg-slate-300" />
         </div>
 
         <form onSubmit={(e) => void submit(e)} noValidate className="space-y-5">

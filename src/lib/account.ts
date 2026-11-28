@@ -92,9 +92,29 @@ export async function logIn(emailIn: string, password: string): Promise<{ ok: tr
   const rec = readAll().find((a) => a.email === email);
   const wrong: Bi = { en: 'The email or password is not right. Please try again.', ms: 'E-mel atau kata laluan tidak betul. Sila cuba lagi.' };
   if (!rec) return { ok: false, error: wrong };
+  if (!rec.hash) return { ok: false, error: { en: 'This account uses Google. Please choose Continue with Google.', ms: 'Akaun ini menggunakan Google. Sila pilih Teruskan dengan Google.' } };
   const h = await hashPassword(password, rec.salt);
   if (h !== rec.hash) return { ok: false, error: wrong };
   return { ok: true, account: { name: rec.name, email: rec.email } };
+}
+
+/**
+ * Signs in with a Google profile, creating the account the first time. Google accounts have no
+ * password here (empty hash), so the password form can never log into them.
+ * NOTE: the profile comes from the browser. A real service must verify Google's ID token on a server.
+ */
+export function signInWithGoogle(profile: { name: string; email: string }): { ok: true; account: Account } | { ok: false; error: Bi } {
+  const email = normEmail(profile.email);
+  const list = readAll();
+  const found = list.find((a) => a.email === email);
+  if (found) return { ok: true, account: { name: found.name, email: found.email } };
+  const rec: Stored = { name: profile.name.trim() || email.split('@')[0], email, salt: '', hash: '' };
+  try {
+    writeAll([...list, rec]);
+  } catch {
+    return { ok: false, error: { en: 'We could not save your account on this device. Check that the browser allows storage.', ms: 'Kami tidak dapat menyimpan akaun anda pada peranti ini. Semak bahawa pelayar membenarkan storan.' } };
+  }
+  return { ok: true, account: { name: rec.name, email } };
 }
 
 /** The saved journey for one account: the app state as a plain object, or null if nothing was saved yet. */
@@ -113,4 +133,39 @@ export function saveUserData(email: string, data: unknown) {
   } catch {
     /* storage full or blocked: the in-memory state still works */
   }
+}
+
+/** True when the account signs in with a password (Google accounts do not). */
+export function hasPassword(email: string): boolean {
+  return !!readAll().find((a) => a.email === normEmail(email))?.hash;
+}
+
+export function renameAccount(email: string, name: string): Account | null {
+  const list = readAll();
+  const rec = list.find((a) => a.email === normEmail(email));
+  if (!rec || name.trim().length < 2) return null;
+  rec.name = name.trim();
+  try { writeAll(list); } catch { return null; }
+  return { name: rec.name, email: rec.email };
+}
+
+export async function changePassword(email: string, current: string, next: string): Promise<{ ok: true } | { ok: false; error: Bi }> {
+  if (next.length < MIN_PASSWORD) return { ok: false, error: { en: `Use at least ${MIN_PASSWORD} characters for the new password.`, ms: `Guna sekurang-kurangnya ${MIN_PASSWORD} aksara untuk kata laluan baharu.` } };
+  const list = readAll();
+  const rec = list.find((a) => a.email === normEmail(email));
+  if (!rec || !rec.hash) return { ok: false, error: { en: 'This account has no password.', ms: 'Akaun ini tiada kata laluan.' } };
+  if ((await hashPassword(current, rec.salt)) !== rec.hash) return { ok: false, error: { en: 'The current password is not right.', ms: 'Kata laluan semasa tidak betul.' } };
+  rec.salt = newSalt();
+  rec.hash = await hashPassword(next, rec.salt);
+  try { writeAll(list); } catch { return { ok: false, error: { en: 'We could not save the new password.', ms: 'Kami tidak dapat menyimpan kata laluan baharu.' } }; }
+  return { ok: true };
+}
+
+/** Removes the account and everything saved under it from this browser. */
+export function deleteAccount(email: string) {
+  const e = normEmail(email);
+  try {
+    writeAll(readAll().filter((a) => a.email !== e));
+    localStorage.removeItem(DATA_PREFIX + e);
+  } catch { /* nothing more to do */ }
 }

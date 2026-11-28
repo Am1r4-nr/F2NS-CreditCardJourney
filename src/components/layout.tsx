@@ -100,7 +100,7 @@ const MORE_NAV: { route: Route; label: ReturnType<typeof bi> }[] = [
   { route: 'pricing', label: bi('Pricing', 'Harga') },
   { route: 'trust', label: bi('Trust and safety', 'Kepercayaan') },
   { route: 'workshop', label: bi('Workshop', 'Bengkel') },
-  { route: 'account', label: bi('My account', 'Akaun saya') },
+  { route: 'account', label: bi('My profile', 'Profil saya') },
 ];
 
 const ICON_PATHS: Record<Route, string> = {
@@ -254,9 +254,22 @@ export function Header({ route }: { route: Route }) {
           >
             {t(bi('Guide', 'Panduan'))}
           </button>
-          <a href={href('account')} className="inline-flex min-h-11 items-center rounded-full border-2 border-white/80 px-4 text-sm font-bold text-white hover:bg-white/10">
-            {state.account ? state.account.name.split(' ')[0] : t(bi('Log in or sign up', 'Log masuk atau daftar'))}
-          </a>
+          {state.account ? (
+            <a
+              href={href('account')}
+              aria-label={`${t(bi('Profile', 'Profil'))}: ${state.account.name}`}
+              className="grid min-h-11 min-w-11 place-items-center rounded-full bg-white text-[#1c1412]"
+            >
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+              </svg>
+            </a>
+          ) : (
+            <a href={href('account')} className="inline-flex min-h-11 items-center rounded-full border-2 border-white/80 px-4 text-sm font-bold text-white hover:bg-white/10">
+              {t(bi('Log in or sign up', 'Log masuk atau daftar'))}
+            </a>
+          )}
           <div role="group" aria-label={t(bi('Language', 'Bahasa'))} className="flex overflow-hidden rounded-full border-2 border-white">
             {(['en', 'ms'] as const).map((l) => (
               <button

@@ -269,5 +269,18 @@ expect('proof is blocked until completed', !!validateQuestion('proof', { ...base
 expect('proof from a different method does not count', !!validateQuestion('proof', { ...base, proofMethod: 'lhdn', proof: { method: 'bank', avgMonthly: 1, lowest: 1, highest: 1, source: '' } }));
 expect('review needs the cost confirmation', !!validateQuestion('review', base) && validateQuestion('review', { ...base, costRead: true }) === undefined);
 expect('scan blocks until scanned or manual', !!validateQuestion('scan', base) && validateQuestion('scan', { ...base, scanned: true }) === undefined);
+// ---- Credit score tracking ----
+import { chartPoints, scoreTrend, sortedScores, validateScore } from '../src/lib/score.ts';
+const sc = (id: string, date: string, score: number) => ({ id, date, score, source: 'CTOS' });
+expect('score: whole number between 300 and 850 passes', validateScore('700', '2026-11-01', '2026-11-19') === undefined);
+expect('score: blank, text, decimal, too low and too high are refused', ['', 'abc', '700.5', '299', '851'].every((s) => validateScore(s, '2026-11-01', '2026-11-19') !== undefined));
+expect('score: 300 and 850 are allowed', validateScore('300', '2026-11-01', '2026-11-19') === undefined && validateScore('850', '2026-11-01', '2026-11-19') === undefined);
+expect('score: future and invalid dates are refused', validateScore('700', '2026-12-01', '2026-11-19') !== undefined && validateScore('700', 'nope', '2026-11-19') !== undefined);
+expect('score: no entries gives no trend', scoreTrend([]) === null);
+expect('score: one entry has no change', (() => { const t = scoreTrend([sc('a', '2026-10-01', 650)]); return t?.change === null && t?.direction === null && t?.latest.score === 650; })());
+expect('score: entries sort by date even when added out of order', sortedScores([sc('b', '2026-11-01', 700), sc('a', '2026-09-01', 650)]).map((e) => e.id).join() === 'a,b');
+expect('score: trend uses the newest and the one before it', (() => { const t = scoreTrend([sc('a', '2026-09-01', 650), sc('c', '2026-11-01', 690), sc('b', '2026-10-01', 700)]); return t?.latest.score === 690 && t?.change === -10 && t?.direction === 'down' && t?.sinceFirst === 40; })());
+expect('score: chart points stay inside the box, higher score is higher up', (() => { const p = chartPoints([sc('a', '2026-09-01', 300), sc('b', '2026-10-01', 850)], 560, 180); return p.every((q) => q.x >= 0 && q.x <= 560 && q.y >= 0 && q.y <= 180) && p[1].y < p[0].y; })());
+
 
 process.exit(failed ? 1 : 0);

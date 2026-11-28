@@ -118,12 +118,24 @@ export interface CompareState {
   log: { compared: string[]; viewed: string[] };
 }
 
+export interface ScoreEntry {
+  id: string;
+  /** YYYY-MM-DD, the day the user checked it */
+  date: string;
+  score: number;
+  source: string;
+}
+
 export type StageKey = 'ready' | 'cost' | 'apply' | 'track' | 'use';
 
 export interface AppState {
   lang: Lang;
   /** The signed-in prototype account, or null. Applying needs one, so the answers can be saved. */
   account: Account | null;
+  /** Bigger text across the site. */
+  largeText: boolean;
+  /** Credit scores the user typed in from their own report. */
+  scores: ScoreEntry[];
   demo: boolean;
   walkStep: number;
   walkStartedAt: number | null;

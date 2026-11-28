@@ -37,6 +37,8 @@ export function initialState(): AppState {
   return {
     lang: stored ? 'ms' : 'en',
     account: null,
+    largeText: false,
+    scores: [],
     demo: false,
     walkStep: 0,
     walkStartedAt: null,
@@ -83,6 +85,7 @@ function hydrate(parsed: Partial<AppState>): AppState {
     return {
       ...base,
       ...parsed,
+      scores: Array.isArray(parsed.scores) ? parsed.scores.filter((x) => x && typeof x.score === 'number' && typeof x.date === 'string') : [],
       draft: { ...base.draft, ...parsed.draft },
       use: { ...base.use, ...parsed.use },
       compare,
@@ -153,6 +156,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   useEffect(() => {
+    document.documentElement.style.fontSize = state.largeText ? '19px' : '';
+  }, [state.largeText]);
+
+  useEffect(() => {
     document.documentElement.lang = state.lang === 'ms' ? 'ms' : 'en';
   }, [state.lang]);
 
@@ -166,7 +173,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const patchDraft = useCallback((p: Partial<Draft>) => setState((s) => ({ ...s, draft: { ...s.draft, ...p } })), []);
   const setOutcome = useCallback((outcome: Outcome) => setState((s) => ({ ...s, track: { ...s.track, outcome } })), []);
   const resetAll = useCallback(() => {
-    setState((s) => ({ ...initialState(), lang: s.lang, entries: s.entries, account: s.account }));
+    setState((s) => ({ ...initialState(), lang: s.lang, largeText: s.largeText, entries: s.entries, account: s.account }));
   }, []);
 
   const signInAs = useCallback((account: Account) => {
@@ -177,7 +184,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
   /** Signing out clears the answers from this screen. They stay saved under the account. */
   const signOut = useCallback(() => {
-    setState((s) => ({ ...initialState(), lang: s.lang, entries: s.entries }));
+    setState((s) => ({ ...initialState(), lang: s.lang, largeText: s.largeText, entries: s.entries }));
   }, []);
 
   const value = useMemo(() => ({ state, update, patch, patchDraft, setOutcome, resetAll, signInAs, signOut }), [state, update, patch, patchDraft, setOutcome, resetAll, signInAs, signOut]);
