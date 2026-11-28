@@ -21,11 +21,13 @@ The routes below can also be followed by hand.
 | UAT-09 | All 11 pages | Any | Each loads with a heading and no browser errors |
 | UAT-10 | Main pages at 375 px wide | Phone user | No sideways scroll |
 | UAT-11 | Help button | Any | Opens chat/call options, closes with Esc |
+| UAT-12 | Apply → Start without an account → sign-up (errors, valid) → fill step 1–2 → save → Log out → Log in (wrong then right password) → resume; sign up again with the same email | New applicant | Applying needs an account. Sign-up checks name, email, password and the tick box. Answers come back after log-in. Wrong password and duplicate email give clear errors |
 
 ## Not covered by the automated run (check by hand)
 
 - Screen reader reading order and announcements.
 - Colour contrast of every pair (the theme was checked by calculation only).
 - Safari, Firefox and a real phone.
+- Accounts are a prototype: they live in this browser only, with no email check or password reset. A real build needs a server.
 - Placeholders still to replace: BNM licence number, PIDM text, phone number.
 - Card data accuracy against each bank's own page.

@@ -255,7 +255,7 @@ export function Header({ route }: { route: Route }) {
             {t(bi('Guide', 'Panduan'))}
           </button>
           <a href={href('account')} className="inline-flex min-h-11 items-center rounded-full border-2 border-white/80 px-4 text-sm font-bold text-white hover:bg-white/10">
-            {state.account ? state.account.name.split(' ')[0] : t(bi('Log in', 'Log masuk'))}
+            {state.account ? state.account.name.split(' ')[0] : t(bi('Log in or sign up', 'Log masuk atau daftar'))}
           </a>
           <div role="group" aria-label={t(bi('Language', 'Bahasa'))} className="flex overflow-hidden rounded-full border-2 border-white">
             {(['en', 'ms'] as const).map((l) => (

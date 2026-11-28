@@ -10,15 +10,7 @@ export function AccountPage() {
   const account = state.account;
 
   if (!account) {
-    return (
-      <div className="max-w-xl space-y-6">
-        <PageTitle
-          title={t(bi('Your account', 'Akaun anda'))}
-          intro={t(bi('Create a free account to save your application and come back to it later.', 'Daftar akaun percuma untuk menyimpan permohonan anda dan sambung kemudian.'))}
-        />
-        <AuthPanel onDone={() => navigate('apply')} />
-      </div>
-    );
+    return <AuthPanel onDone={() => navigate('apply')} />;
   }
 
   const started = state.draft.started || state.draft.savedAt !== null || state.submission !== null;

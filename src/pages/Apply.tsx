@@ -66,12 +66,11 @@ export function ApplyPage() {
   // ----- Sign up first, so the answers can be saved -----
   if (!state.account && (needAccount || draft.started)) {
     return (
-      <div className="max-w-xl space-y-6">
-        <PageTitle
-          title={t(bi('Create your account to apply', 'Daftar akaun untuk memohon'))}
-          intro={t(bi('An account saves your answers as you go. If you stop, you can log in later and carry on where you left off.', 'Akaun menyimpan jawapan anda semasa anda isi. Jika anda berhenti, anda boleh log masuk kemudian dan sambung dari tempat anda berhenti.'))}
+      <div className="space-y-4">
+        <AuthPanel
+          reason={bi('An account saves your answers as you go, so you can stop and carry on later.', 'Akaun menyimpan jawapan anda semasa anda isi, jadi anda boleh berhenti dan sambung kemudian.')}
+          onDone={() => { setNeedAccount(false); if (!draft.started) beginApplication(); }}
         />
-        <AuthPanel onDone={() => { setNeedAccount(false); if (!draft.started) beginApplication(); }} />
         <Button variant="ghost" onClick={() => { setNeedAccount(false); patchDraft({ started: false }); }}>{t(bi('Back to the checklist', 'Kembali ke senarai semak'))}</Button>
       </div>
     );

@@ -43,7 +43,7 @@ async function signUpHere(p, email = `uat${Date.now()}@example.com`, name = 'Haf
   await p.getByLabel('Email address').fill(email);
   await p.getByLabel('Password').fill('correct horse 9');
   await p.getByRole('checkbox').check();
-  await p.getByRole('button', { name: /Create account and continue/ }).click();
+  await p.getByRole('button', { name: /^Create account/ }).click();
   return email;
 }
 /** Fills the apply wizard from the identity step to the review page. */
@@ -52,7 +52,7 @@ async function applyToReview(p, step, { camera = true, proof = 'bank' } = {}) {
     await go(p, 'apply');
     await expectText(p, /document checklist/i);
     await p.getByRole('button', { name: 'I am ready. Start' }).click();
-    await expectText(p, /Create your account to apply/);
+    await expectText(p, /Create your account/);
     await signUpHere(p);
     await expectText(p, /Step 1 of 5/);
   });
@@ -406,17 +406,17 @@ await scenario('UAT-12', 'Account: applying needs a sign-up, answers are saved t
   await step('Start applying without an account shows the sign-up form', async () => {
     await go(p, 'apply');
     await p.getByRole('button', { name: 'I am ready. Start' }).click();
-    await expectText(p, /Create your account to apply/);
+    await expectText(p, /Create your account/);
     must((await p.getByText(/Step 1 of 5/).count()) === 0, 'wizard visible without an account');
   });
   await step('Sign-up checks name, email, password and the tick box', async () => {
-    await p.getByRole('button', { name: /Create account and continue/ }).click();
+    await p.getByRole('button', { name: /^Create account/ }).click();
     await p.waitForTimeout(300);
     must((await p.locator('[role=alert]').count()) >= 3, 'expected several errors');
     await p.getByLabel('Your name').fill('Hafiz');
     await p.getByLabel('Email address').fill('not-an-email');
     await p.getByLabel('Password').fill('short');
-    await p.getByRole('button', { name: /Create account and continue/ }).click();
+    await p.getByRole('button', { name: /^Create account/ }).click();
     await p.waitForTimeout(300);
     must(await hasText(p, /valid email/i) && await hasText(p, /at least 8/i), 'email/password errors missing');
   });
@@ -425,7 +425,7 @@ await scenario('UAT-12', 'Account: applying needs a sign-up, answers are saved t
     await p.getByLabel('Email address').fill(email);
     await p.getByLabel('Password').fill('correct horse 9');
     await p.getByRole('checkbox').check();
-    await p.getByRole('button', { name: /Create account and continue/ }).click();
+    await p.getByRole('button', { name: /^Create account/ }).click();
     await expectText(p, /Step 1 of 5/);
     must((await p.locator('header a', { hasText: 'Hafiz' }).count()) === 1, 'name not in header');
   });
@@ -444,10 +444,10 @@ await scenario('UAT-12', 'Account: applying needs a sign-up, answers are saved t
     await p.getByRole('tab', { name: /I have an account/ }).click();
     await p.getByLabel('Email address').fill(email);
     await p.getByLabel('Password').fill('wrong password');
-    await p.getByRole('button', { name: /Log in and continue/ }).click();
+    await p.getByRole('button', { name: /^Log in/ }).click();
     await expectText(p, /email or password is not right/i);
     await p.getByLabel('Password').fill('correct horse 9');
-    await p.getByRole('button', { name: /Log in and continue/ }).click();
+    await p.getByRole('button', { name: /^Log in/ }).click();
     await p.waitForURL(/#\/apply/);
     const cont = p.getByRole('button', { name: /Continue my saved application/ });
     if (await cont.count()) await cont.click();
@@ -464,7 +464,7 @@ await scenario('UAT-12', 'Account: applying needs a sign-up, answers are saved t
     await p.getByLabel('Email address').fill(email);
     await p.getByLabel('Password').fill('another pass 1');
     await p.getByRole('checkbox').check();
-    await p.getByRole('button', { name: /Create account and continue/ }).click();
+    await p.getByRole('button', { name: /^Create account/ }).click();
     await expectText(p, /already an account/i);
   });
 });
