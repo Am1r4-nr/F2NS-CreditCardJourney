@@ -136,4 +136,8 @@ export interface AppState {
   /** The card the user picked via Apply or Simulate. Null means standard rates. */
   selectedCardId: string | null;
   done: Record<StageKey, boolean>;
+  /** Stages the user chose to skip past after confirming. Shown in orange on the timeline. */
+  skipped: Record<StageKey, boolean>;
+  /** The timeline step the user was last on. "Start applying" in the sidebar returns here. */
+  lastStage: 'ready' | 'cost' | 'apply';
 }

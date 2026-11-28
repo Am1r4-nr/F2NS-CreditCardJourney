@@ -247,24 +247,29 @@ await scenario('UAT-05', 'Navigation: menu, skip-ahead confirmation, stepper, sk
     await p.getByRole('button', { name: 'Open menu' }).click();
     const dlg = p.getByRole('dialog', { name: 'Menu' });
     await dlg.waitFor();
-    for (const name of ['Home', 'Am I ready?', 'Apply', 'Compare cards', 'Learn', 'Pricing', 'Workshop']) {
+    for (const name of ['Home', 'Start applying', 'Track Application', 'Use it well', 'Compare cards', 'Learn', 'Pricing', 'Workshop']) {
       must((await dlg.getByRole('link', { name }).count()) === 1, 'menu missing ' + name);
     }
     await p.keyboard.press('Escape');
     await dlg.waitFor({ state: 'hidden' });
   });
-  await step('Jumping ahead asks for confirmation; Stay here cancels', async () => {
-    await p.getByRole('button', { name: 'Open menu' }).click();
-    await p.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'Track' }).click();
+  await step('Jumping ahead on the timeline asks for confirmation; Stay here cancels', async () => {
+    await go(p, 'ready');
+    await p.getByRole('navigation', { name: 'Your journey' }).getByRole('link', { name: /Apply/ }).click();
     await p.getByRole('alertdialog').waitFor();
     await p.getByRole('button', { name: 'Stay here' }).click();
-    must(!/#\/track/.test(p.url()), 'navigated despite Stay here');
+    must(!/#\/apply/.test(p.url()), 'navigated despite Stay here');
   });
   await step('Yes, skip goes ahead', async () => {
-    await p.getByRole('button', { name: 'Open menu' }).click();
-    await p.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'Track' }).click();
+    await p.getByRole('navigation', { name: 'Your journey' }).getByRole('link', { name: /Apply/ }).click();
     await p.getByRole('button', { name: 'Yes, skip' }).click();
-    await p.waitForURL(/#\/track/);
+    await p.waitForURL(/#\/apply/);
+  });
+  await step('Menu "Start applying" resumes the last timeline step', async () => {
+    await go(p, '');
+    await p.getByRole('button', { name: 'Open menu' }).click();
+    await p.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'Start applying' }).click();
+    await p.waitForURL(/#\/(ready|cost|apply)/);
   });
   await step('Going back is free (no confirmation)', async () => {
     await p.getByRole('button', { name: 'Open menu' }).click();

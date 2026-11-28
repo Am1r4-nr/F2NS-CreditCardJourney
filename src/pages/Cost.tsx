@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { bi, useLang, C } from '../i18n/index.tsx';
 import { useApp } from '../state/store.tsx';
 import { href } from '../lib/router.ts';
@@ -47,11 +46,9 @@ export function CostPage() {
   const card = findCard(state.selectedCardId);
   const terms = card ? termsFromCard(card) : DEFAULT_TERMS;
   const missing = card ? missingTerms(card) : { interest: false, minPayment: false, lateFee: false };
-  const set = (p: Partial<typeof sim>) => update((s) => ({ ...s, sim: { ...s.sim, ...p } }));
-
-  useEffect(() => {
-    update((s) => (s.done.cost ? s : { ...s, done: { ...s.done, cost: true } }));
-  }, [update]);
+  // The step counts as done only once the user tries the simulator, not just by opening the page.
+  const markDone = () => update((s) => (s.done.cost ? s : { ...s, done: { ...s.done, cost: true } }));
+  const set = (p: Partial<typeof sim>) => update((s) => ({ ...s, sim: { ...s.sim, ...p }, done: { ...s.done, cost: true } }));
 
   const chosen = simulate(sim, terms);
   const minimum = simulate({ ...sim, mode: 'minimum' }, terms);
@@ -177,7 +174,7 @@ export function CostPage() {
           </ul>
         </Callout>
         <div className="flex flex-wrap gap-3">
-          <LinkButton href={href('apply')}>{t(bi('Next: Apply', 'Seterusnya: Mohon'))}</LinkButton>
+          <LinkButton href={href('apply')} onClick={markDone}>{t(bi('Next: Apply', 'Seterusnya: Mohon'))}</LinkButton>
           <LinkButton href={href('pricing')} variant="secondary">{t(bi('See all fees', 'Lihat semua yuran'))}</LinkButton>
         </div>
       </div>

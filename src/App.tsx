@@ -1,6 +1,6 @@
 import { useEffect, type ReactElement } from 'react';
 import { useRoute, type Route } from './lib/router.ts';
-import { Footer, HelpWidget, Header, JourneyNavProvider, Stepper, STAGES } from './components/layout.tsx';
+import { Footer, HelpWidget, Header, JourneyNavProvider, Stepper, TIMELINE_STAGES } from './components/layout.tsx';
 import { useApp } from './state/store.tsx';
 import { HomePage } from './pages/Home.tsx';
 import { ReadyPage } from './pages/Ready.tsx';
@@ -34,10 +34,26 @@ const PAGES: Partial<Record<Route, () => ReactElement>> = {
 
 export function App() {
   const route = useRoute();
-  const { state } = useApp();
+  const { state, patch, update } = useApp();
   const Page = PAGES[route] ?? HomePage;
-  const showStepper = route === 'compare' || STAGES.some((s) => s.route === route);
+  const showStepper = route === 'compare' || TIMELINE_STAGES.some((s) => s.route === route);
   const lifted = state.demo || (route === 'compare' && state.compare.selected.length > 0);
+
+  // Remember the last timeline step, so "Start applying" can return to it.
+  useEffect(() => {
+    if (route === 'ready' || route === 'cost' || route === 'apply') patch({ lastStage: route });
+  }, [route, patch]);
+
+  // Going back to an earlier step clears the "skipped" mark on every step ahead of it.
+  useEffect(() => {
+    const at = TIMELINE_STAGES.findIndex((s) => s.route === route);
+    if (at === -1) return;
+    update((s) => {
+      const ahead = TIMELINE_STAGES.slice(at + 1).filter((st) => s.skipped[st.key]);
+      if (ahead.length === 0) return s;
+      return { ...s, skipped: { ...s.skipped, ...Object.fromEntries(ahead.map((st) => [st.key, false])) } };
+    });
+  }, [route, update]);
 
   // Move focus to the new screen heading when the screen changes.
   useEffect(() => {
