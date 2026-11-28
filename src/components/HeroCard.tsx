@@ -1,46 +1,44 @@
-/** A decorative copper card resting on a peach block. Pure SVG, no images, hidden from screen readers. */
+/** A decorative red-to-yellow card, tilted. Pure SVG, no images, hidden from screen readers. */
 export function HeroCard() {
   return (
-    <svg viewBox="0 0 520 420" role="presentation" aria-hidden="true" focusable="false" className="h-auto w-full max-w-xl">
+    <svg viewBox="0 0 400 270" role="presentation" aria-hidden="true" focusable="false" className="h-auto w-full">
       <defs>
-        <linearGradient id="blockTop" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#f6dcd0" />
-          <stop offset="1" stopColor="#efc9bb" />
+        <linearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="0.6">
+          <stop offset="0" stopColor="#b3141b" />
+          <stop offset="0.5" stopColor="#ee4f1a" />
+          <stop offset="1" stopColor="#fbb02d" />
         </linearGradient>
-        <linearGradient id="blockSide" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#e9b9a8" />
-          <stop offset="1" stopColor="#dfa593" />
+        <linearGradient id="cardShine" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.28" />
+          <stop offset="0.45" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id="copper" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#efab92" />
-          <stop offset="0.55" stopColor="#dc8467" />
-          <stop offset="1" stopColor="#c46a52" />
+        <linearGradient id="chipGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#f6e3b4" />
+          <stop offset="1" stopColor="#c9a25a" />
         </linearGradient>
-        <linearGradient id="chip" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#f7d7c4" />
-          <stop offset="1" stopColor="#c98d6e" />
-        </linearGradient>
-        <filter id="soft" x="-20%" y="-20%" width="140%" height="150%">
-          <feDropShadow dx="0" dy="14" stdDeviation="14" floodColor="#8a4a3a" floodOpacity="0.28" />
+        <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="160%">
+          <feDropShadow dx="0" dy="18" stdDeviation="16" floodColor="#4a0709" floodOpacity="0.45" />
         </filter>
       </defs>
-
-      {/* the block */}
-      <polygon points="250,70 500,10 500,300 250,400" fill="url(#blockTop)" />
-      <polygon points="120,220 250,70 250,400 120,420" fill="url(#blockSide)" opacity="0.85" />
-      <polygon points="250,70 500,10 500,60 250,120" fill="#fff" opacity="0.18" />
-
-      {/* the card */}
-      <g transform="translate(30 150) rotate(-17 150 95)" filter="url(#soft)">
-        <rect width="330" height="205" rx="18" fill="url(#copper)" />
-        <rect width="330" height="205" rx="18" fill="none" stroke="#fff" strokeOpacity="0.25" />
-        <rect x="26" y="34" width="52" height="40" rx="8" fill="url(#chip)" stroke="#fff" strokeOpacity="0.5" />
-        <path d="M26 54h52M52 34v40" stroke="#9c5f47" strokeOpacity="0.45" strokeWidth="1.5" />
-        <path d="M100 44c8 6 8 22 0 28M110 40c12 10 12 30 0 40" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="2" strokeLinecap="round" />
-        <text x="26" y="150" fill="#9a4a35" fillOpacity="0.85" fontSize="15" fontWeight="700" letterSpacing="3" fontFamily="Poppins, sans-serif">CARDHOLDER NAME</text>
-        <text x="26" y="176" fill="#fff" fillOpacity="0.7" fontSize="12" letterSpacing="3" fontFamily="Poppins, sans-serif">0000 0000 0000 0000</text>
-        <circle cx="262" cy="160" r="22" fill="#e0484e" fillOpacity="0.92" />
-        <circle cx="284" cy="160" r="22" fill="#f1a63a" fillOpacity="0.9" />
+      <g transform="rotate(-5 200 135)" filter="url(#cardShadow)">
+        <rect x="20" y="20" width="360" height="226" rx="22" fill="url(#cardGrad)" />
+        <rect x="20" y="20" width="360" height="226" rx="22" fill="url(#cardShine)" />
+        <rect x="20.5" y="20.5" width="359" height="225" rx="21.5" fill="none" stroke="#fff" strokeOpacity="0.35" />
+        {/* mark */}
+        <g transform="translate(46 46)" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 40V4M4 24L30 4M12 20l20 20" />
+        </g>
+        {/* contactless */}
+        <g transform="translate(300 52)" fill="none" stroke="#fff" strokeOpacity="0.85" strokeWidth="3.5" strokeLinecap="round">
+          <path d="M6 4c8 8 8 20 0 28M16 0c12 11 12 29 0 40" />
+        </g>
+        {/* chip */}
+        <rect x="248" y="150" width="54" height="42" rx="8" fill="url(#chipGrad)" stroke="#fff" strokeOpacity="0.5" />
+        <path d="M248 171h54M275 150v42M248 160h18M284 160h18M248 182h18M284 182h18" stroke="#8a6a32" strokeOpacity="0.55" strokeWidth="1.4" fill="none" />
+        {/* circles */}
+        <circle cx="318" cy="205" r="20" fill="#e0242b" fillOpacity="0.95" />
+        <circle cx="338" cy="205" r="20" fill="#fdbe3a" fillOpacity="0.95" />
+        <text x="46" y="214" fill="#fff" fillOpacity="0.9" fontSize="13" fontWeight="600" letterSpacing="3" fontFamily="Poppins, sans-serif">KAF FIRST CARD</text>
       </g>
     </svg>
   );

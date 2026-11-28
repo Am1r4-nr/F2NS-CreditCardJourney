@@ -1,50 +1,60 @@
 @import 'tailwindcss';
 
 /*
-  Theme: soft peach, cream and mint gradient, navy text and buttons, copper accent.
+  Theme: a vivid red, orange and yellow gradient with fine grain, white pill buttons,
+  near-black ink and a big ghost wordmark. Content sits on white sheets so text stays readable.
   The "cyan" and "teal" colour names are used all over the app, so they are re-pointed here
-  to a navy scale. Changing these values re-colours the whole app.
+  to a crimson scale and an ink scale. Changing these values re-colours the whole app.
 */
 @theme {
-  --font-sans: 'Poppins', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --font-sans: 'Jost', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
 
-  --color-cyan-50: #fbf5f0;
-  --color-cyan-100: #f6e9e1;
-  --color-cyan-200: #ebd9d4;
-  --color-cyan-300: #d3cbe0;
-  --color-cyan-400: #9ea3d0;
-  --color-cyan-500: #6a70b3;
-  --color-cyan-600: #3d4491;
-  --color-cyan-700: #1f2563;
-  --color-cyan-800: #171c52;
-  --color-cyan-900: #0f1340;
-  --color-cyan-950: #0a0d2e;
+  --color-cyan-50: #fff6ee;
+  --color-cyan-100: #ffe9d6;
+  --color-cyan-200: #fed2ad;
+  --color-cyan-300: #f9ad77;
+  --color-cyan-400: #f4854a;
+  --color-cyan-500: #e8552b;
+  --color-cyan-600: #d12a1f;
+  --color-cyan-700: #b91c1c;
+  --color-cyan-800: #8f1a17;
+  --color-cyan-900: #6b1412;
+  --color-cyan-950: #3d0a08;
 
-  --color-teal-500: #d98a6c;
-  --color-teal-600: #c4745a;
-  --color-teal-700: #1f2563;
-  --color-teal-800: #171c52;
+  --color-teal-500: #3a2c28;
+  --color-teal-600: #2a1f1c;
+  --color-teal-700: #1c1412;
+  --color-teal-800: #000000;
 }
 
 html { font-size: 16px; }
 
 body {
   margin: 0;
-  color: #151a4a;
+  color: #1c1412;
   @apply antialiased;
-  background-color: #fdf0e6;
+  background-color: #d92b1c;
   background-image:
-    radial-gradient(55% 45% at 6% 4%, #fde6d3 0%, rgba(253, 230, 211, 0) 70%),
-    radial-gradient(45% 40% at 96% 12%, #e3e9f8 0%, rgba(227, 233, 248, 0) 70%),
-    radial-gradient(60% 50% at 4% 96%, #d6f1ec 0%, rgba(214, 241, 236, 0) 70%),
-    linear-gradient(180deg, #fdf1e8 0%, #f1f3f6 55%, #e3f4f1 100%);
+    url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyMjAnIGhlaWdodD0nMjIwJz48ZmlsdGVyIGlkPSduJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nMC44NScgbnVtT2N0YXZlcz0nMicgc3RpdGNoVGlsZXM9J3N0aXRjaCcvPjxmZUNvbG9yTWF0cml4IHZhbHVlcz0nMCAwIDAgMCAxICAwIDAgMCAwIDEgIDAgMCAwIDAgMSAgMCAwIDAgMC4zNSAwJy8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nMTAwJScgZmlsdGVyPSd1cmwoI24pJy8+PC9zdmc+"),
+    radial-gradient(55% 40% at 88% 58%, rgba(253, 190, 58, 0.85), rgba(253, 190, 58, 0) 70%),
+    radial-gradient(70% 45% at 8% 100%, rgba(253, 190, 58, 0.9), rgba(253, 190, 58, 0) 70%),
+    linear-gradient(165deg, #a3121b 0%, #d92b1c 32%, #ee5f17 68%, #fba32a 100%);
   background-attachment: fixed;
 }
 
-:focus-visible { outline: 3px solid #e08a1e; outline-offset: 2px; }
-h1:focus, h2:focus { outline: none; }
-input[type='range'] { accent-color: #1f2563; }
-h1, h2, h3 { letter-spacing: -0.01em; }
+/* Fine film grain for hero panels. */
+.grain { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyMjAnIGhlaWdodD0nMjIwJz48ZmlsdGVyIGlkPSduJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nMC44NScgbnVtT2N0YXZlcz0nMicgc3RpdGNoVGlsZXM9J3N0aXRjaCcvPjxmZUNvbG9yTWF0cml4IHZhbHVlcz0nMCAwIDAgMCAxICAwIDAgMCAwIDEgIDAgMCAwIDAgMSAgMCAwIDAgMC4zNSAwJy8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nMTAwJScgZmlsdGVyPSd1cmwoI24pJy8+PC9zdmc+"); }
+
+/* A two-tone ring shows on both the dark red header and the white sheets. */
+:focus-visible { outline: 3px solid #1c1412; outline-offset: 2px; box-shadow: 0 0 0 5px #ffffff; }
+h1:focus, h2:focus { outline: none; box-shadow: none; }
+input[type='range'] { accent-color: #b91c1c; }
+h1, h2, h3 { letter-spacing: 0.04em; }
+h1 { font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+h2, h3 { font-weight: 600; letter-spacing: 0.06em; }
+/* Flat rounded tiles, no shadow, like paper cut-outs. */
+.soft { background: #fff1e8; border: 0; box-shadow: none; }
+.sheet { background: #ffffff; box-shadow: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

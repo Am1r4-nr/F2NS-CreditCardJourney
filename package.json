@@ -9,9 +9,11 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "check:logic": "node scripts/check-logic.ts"
+    "check:logic": "node scripts/check-logic.ts",
+    "uat": "node scripts/uat/run.mjs"
   },
   "dependencies": {
+    "@fontsource/jost": "^5.3.0",
     "@fontsource/poppins": "^5.3.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
@@ -22,6 +24,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "playwright-core": "^1.65.1",
     "tailwindcss": "^4.3.5",
     "typescript": "^7.0.2",
     "vite": "^8.3.8"

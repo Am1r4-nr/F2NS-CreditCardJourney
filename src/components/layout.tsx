@@ -1,11 +1,12 @@
 import { createPortal } from 'react-dom';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLang, bi } from '../i18n/index.tsx';
-import { hafizDemoState, useApp } from '../state/store.tsx';
+import { useApp } from '../state/store.tsx';
 import { href, navigate, type Route } from '../lib/router.ts';
 import { PLACEHOLDERS } from '../config/rates.ts';
 import type { StageKey } from '../state/types.ts';
 import { Button, Callout } from './ui.tsx';
+import { WALKTHROUGH } from '../data/walkthrough.ts';
 import { delay } from '../lib/mockApi.ts';
 import { useDialog } from '../lib/useDialog.ts';
 
@@ -16,18 +17,6 @@ export const STAGES: { key: StageKey; route: Route; label: ReturnType<typeof bi>
   { key: 'track', route: 'track', label: bi('Track', 'Jejak') },
   { key: 'use', route: 'use', label: bi('Use it well', 'Guna dengan bijak') },
 ];
-
-export function PrototypeBanner() {
-  const { t } = useLang();
-  return (
-    <div className="bg-amber-100 px-4 py-2 text-center text-sm font-semibold text-amber-950">
-      {t(bi(
-        'Prototype. Illustrative only. This is not a real bank offer.',
-        'Prototaip. Untuk ilustrasi sahaja. Ini bukan tawaran bank sebenar.',
-      ))}
-    </div>
-  );
-}
 
 /** Sidebar entries: Home plus the five journey stages. */
 export const SIDEBAR_NAV: { route: Route; label: ReturnType<typeof bi> }[] = [
@@ -87,6 +76,36 @@ export function JourneyNavProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const MORE_NAV: { route: Route; label: ReturnType<typeof bi> }[] = [
+  { route: 'compare', label: bi('Compare cards', 'Banding kad') },
+  { route: 'learn', label: bi('Learn', 'Belajar') },
+  { route: 'pricing', label: bi('Pricing', 'Harga') },
+  { route: 'trust', label: bi('Trust and safety', 'Kepercayaan') },
+  { route: 'workshop', label: bi('Workshop', 'Bengkel') },
+];
+
+const ICON_PATHS: Record<Route, string> = {
+  home: 'M4 11l8-7 8 7v9H4z',
+  ready: 'M5 12l4 4 10-10',
+  compare: 'M4 6h16M4 12h10M4 18h16',
+  cost: 'M12 3v18M16 7H10a3 3 0 000 6h4a3 3 0 010 6H8',
+  apply: 'M6 3h9l4 4v14H6zM9 12h7M9 16h7',
+  track: 'M12 7v5l3 2M12 3a9 9 0 100 18 9 9 0 000-18z',
+  use: 'M3 7h18v12H3zM3 11h18',
+  learn: 'M3 8l9-4 9 4-9 4zM7 11v5c3 2 7 2 10 0v-5',
+  pricing: 'M4 4h8l8 8-8 8-8-8z',
+  trust: 'M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z',
+  workshop: 'M5 20V9l7-5 7 5v11M10 20v-6h4v6',
+};
+
+function NavIcon({ route }: { route: Route }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={ICON_PATHS[route]} />
+    </svg>
+  );
+}
+
 export function Sidebar({ open, onClose, route }: { open: boolean; onClose: () => void; route: Route }) {
   const { t } = useLang();
   const { guard } = useContext(JourneyNavContext);
@@ -119,27 +138,42 @@ export function Sidebar({ open, onClose, route }: { open: boolean; onClose: () =
         aria-modal="true"
         aria-label={t(bi('Menu', 'Menu'))}
         tabIndex={-1}
-        className={`absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col bg-white p-4 shadow-2xl transition-transform duration-300 ease-out motion-reduce:transition-none ${entered && open ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`absolute bottom-3 left-3 top-3 flex w-80 max-w-[calc(100vw-1.5rem)] flex-col overflow-y-auto rounded-[2rem] border border-white/80 bg-gradient-to-b from-white to-slate-200 p-4 text-[#1c1412] shadow-2xl transition-transform duration-300 ease-out motion-reduce:transition-none ${entered && open ? 'translate-x-0' : '-translate-x-[110%]'}`}
       >
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-lg font-bold text-cyan-800">{t(bi('Menu', 'Menu'))}</p>
-          <button type="button" onClick={onClose} aria-label={t(bi('Close menu', 'Tutup menu'))} className="min-h-11 min-w-11 rounded-lg text-2xl">×</button>
+        <div className="mb-3 flex items-center justify-between border-b border-slate-300/70 px-2 pb-4 pt-1">
+          <p className="flex items-center gap-2 text-lg font-extrabold">
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden="true"><path d="M12 1c.6 5.6 5.4 10.4 11 11-5.6.6-10.4 5.4-11 11-.6-5.6-5.4-10.4-11-11C6.6 11.4 11.4 6.6 12 1z" /></svg>
+            {t(bi('Menu', 'Menu'))}
+          </p>
+          <button type="button" onClick={onClose} aria-label={t(bi('Close menu', 'Tutup menu'))} className="grid min-h-11 min-w-11 place-items-center rounded-full bg-white text-2xl shadow-sm">×</button>
         </div>
-        <nav aria-label={t(bi('Main', 'Utama'))}>
-          <ul className="space-y-1">
-            {SIDEBAR_NAV.map((n) => (
-              <li key={n.route}>
-                <a
-                  href={href(n.route)}
-                  aria-current={route === n.route ? 'page' : undefined}
-                  onClick={(e) => { onClose(); guard(n.route, e); }}
-                  className={`flex min-h-11 items-center rounded-xl px-4 text-base font-semibold ${route === n.route ? 'bg-cyan-700 text-white' : 'text-cyan-900 hover:bg-cyan-50'}`}
-                >
-                  {t(n.label)}
-                </a>
-              </li>
-            ))}
-          </ul>
+        <nav aria-label={t(bi('Main', 'Utama'))} className="space-y-4">
+          {[
+            { title: null, items: SIDEBAR_NAV },
+            { title: bi('Explore', 'Terokai'), items: MORE_NAV },
+          ].map((g, gi) => (
+            <div key={gi} className={gi > 0 ? 'border-t border-slate-300/70 pt-4' : ''}>
+              {g.title && <p className="mb-2 px-3 text-sm font-semibold text-slate-600">{t(g.title)}</p>}
+              <ul className="space-y-1">
+                {g.items.map((n) => {
+                  const active = route === n.route;
+                  return (
+                    <li key={n.route}>
+                      <a
+                        href={href(n.route)}
+                        aria-current={active ? 'page' : undefined}
+                        onClick={(e) => { onClose(); guard(n.route, e); }}
+                        className={`flex min-h-11 items-center gap-3 rounded-full px-4 text-base font-semibold transition-colors ${active ? 'bg-[#1c1412] text-white' : 'hover:bg-white'}`}
+                      >
+                        <NavIcon route={n.route} />
+                        {t(n.label)}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
       </div>
     </div>,
@@ -156,13 +190,13 @@ export function Header({ route }: { route: Route }) {
     if (state.demo) {
       patch({ demo: false });
     } else {
-      update((s) => hafizDemoState(s));
-      navigate('home');
+      update((s) => ({ ...s, demo: true, walkStep: 0 }));
+      navigate(WALKTHROUGH[0].route);
     }
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/60 bg-white/55 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-white/20 bg-[#7a0f14]/85 text-white backdrop-blur-md">
       <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-2 px-4 sm:px-8 lg:px-12 py-2">
         <div className="flex items-center gap-2">
           <button
@@ -171,35 +205,39 @@ export function Header({ route }: { route: Route }) {
             aria-haspopup="dialog"
             aria-expanded={menuOpen}
             aria-label={t(bi('Open menu', 'Buka menu'))}
-            className="grid min-h-11 min-w-11 place-items-center rounded-lg border-2 border-cyan-700 bg-white text-cyan-800"
+            className="grid min-h-11 min-w-11 place-items-center rounded-full bg-white text-[#1c1412]"
           >
             <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M3 5h16M3 11h16M3 17h16" />
             </svg>
           </button>
-          <a href={href('home')} className="flex min-h-11 items-center gap-2 rounded-lg text-xl font-bold text-cyan-800">
-            <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-xl border-[1.5px] border-cyan-700 bg-white/50 text-base font-bold text-cyan-700">K</span>
+          <a href={href('home')} className="flex min-h-11 items-center gap-2 rounded-lg text-lg font-semibold uppercase tracking-wide text-white sm:text-xl">
+            <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              {Array.from({ length: 12 }, (_, i) => {
+                const a = (i * Math.PI) / 6;
+                return <line key={i} x1={16 + Math.cos(a) * 5} y1={16 + Math.sin(a) * 5} x2={16 + Math.cos(a) * 14} y2={16 + Math.sin(a) * 14} />;
+              })}
+            </svg>
             KAF First Card
           </a>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            role="switch"
-            aria-checked={state.demo}
+            aria-pressed={state.demo}
             onClick={toggleDemo}
-            className={`min-h-11 rounded-full border-2 px-4 text-sm font-bold ${state.demo ? 'border-amber-500 bg-amber-100 text-amber-950' : 'border-slate-300 bg-white text-slate-700'}`}
+            className={`min-h-11 rounded-full border-2 px-4 text-sm font-bold ${state.demo ? 'border-white bg-white text-[#1c1412]' : 'border-white/80 bg-transparent text-white hover:bg-white/10'}`}
           >
-            {t(bi('Demo mode', 'Mod demo'))}: {state.demo ? t(bi('On', 'Hidup')) : t(bi('Off', 'Mati'))}
+            {t(bi('Guide', 'Panduan'))}
           </button>
-          <div role="group" aria-label={t(bi('Language', 'Bahasa'))} className="flex overflow-hidden rounded-full border-2 border-cyan-700">
+          <div role="group" aria-label={t(bi('Language', 'Bahasa'))} className="flex overflow-hidden rounded-full border-2 border-white">
             {(['en', 'ms'] as const).map((l) => (
               <button
                 key={l}
                 type="button"
                 aria-pressed={lang === l}
                 onClick={() => patch({ lang: l })}
-                className={`min-h-11 min-w-12 px-3 text-sm font-bold ${lang === l ? 'bg-cyan-700 text-white' : 'bg-white text-cyan-800'}`}
+                className={`min-h-11 min-w-12 px-3 text-sm font-bold ${lang === l ? 'bg-white text-[#1c1412]' : 'bg-transparent text-white hover:bg-white/10'}`}
               >
                 {l === 'en' ? 'EN' : 'BM'}
               </button>
@@ -220,7 +258,7 @@ export function Stepper({ route }: { route: Route }) {
   const current = STAGES.findIndex((s) => s.route === route);
   const onCompare = route === 'compare';
   return (
-    <nav aria-label={t(bi('Your journey', 'Perjalanan anda'))} className="mx-auto max-w-screen-2xl px-4 sm:px-8 lg:px-12 pt-4">
+    <nav aria-label={t(bi('Your journey', 'Perjalanan anda'))} className="mx-auto mt-4 w-[calc(100%-2rem)] max-w-screen-2xl rounded-3xl bg-white/95 p-4 shadow-[0_16px_50px_rgba(60,8,8,0.28)] sm:w-[calc(100%-4rem)] lg:w-[calc(100%-6rem)]">
       <ol className="flex">
         {STAGES.map((s, i) => {
           const isCurrent = i === current;
@@ -306,7 +344,7 @@ export function ScamNote() {
 export function Footer() {
   const { t } = useLang();
   return (
-    <footer className="mt-12 border-t border-white/60 bg-white/55 backdrop-blur-md">
+    <footer className="mt-12 rounded-t-[2rem] bg-white/95">
       <div className="mx-auto max-w-screen-2xl space-y-4 px-4 sm:px-8 lg:px-12 py-8">
         <TrustStrip />
         <ScamNote />

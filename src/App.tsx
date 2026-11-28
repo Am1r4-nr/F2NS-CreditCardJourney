@@ -1,6 +1,6 @@
 import { useEffect, type ReactElement } from 'react';
 import { useRoute, type Route } from './lib/router.ts';
-import { Footer, HelpWidget, Header, JourneyNavProvider, PrototypeBanner, Stepper, STAGES } from './components/layout.tsx';
+import { Footer, HelpWidget, Header, JourneyNavProvider, Stepper, STAGES } from './components/layout.tsx';
 import { useApp } from './state/store.tsx';
 import { HomePage } from './pages/Home.tsx';
 import { ReadyPage } from './pages/Ready.tsx';
@@ -14,6 +14,7 @@ import { PricingPage } from './pages/Pricing.tsx';
 import { TrustPage } from './pages/Trust.tsx';
 import { WorkshopPage } from './pages/Workshop.tsx';
 import { Walkthrough } from './components/demo.tsx';
+import { Sheet } from './components/ui.tsx';
 
 
 
@@ -50,11 +51,10 @@ export function App() {
       <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('page-title')?.focus(); }} className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-white focus:p-3">
         Skip to content
       </a>
-      <PrototypeBanner />
       <Header route={route} />
       {showStepper && <Stepper route={route} />}
       <main id="main" className={`mx-auto max-w-screen-2xl px-4 sm:px-8 lg:px-12 py-6 ${state.demo ? 'pb-64' : ''}`}>
-        <Page />
+        {route === 'home' ? <Page /> : <Sheet><Page /></Sheet>}
       </main>
       <Footer />
       {state.demo && <Walkthrough />}

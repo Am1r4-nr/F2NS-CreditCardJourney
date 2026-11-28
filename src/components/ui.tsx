@@ -6,7 +6,7 @@ type Variant = 'primary' | 'secondary' | 'ghost';
 
 export function Button({ variant = 'primary', className = '', ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
   const styles: Record<Variant, string> = {
-    primary: 'rounded-xl bg-cyan-700 text-white hover:bg-cyan-800 disabled:bg-slate-400',
+    primary: 'rounded-full bg-cyan-700 text-white hover:bg-cyan-800 disabled:bg-slate-400',
     secondary: 'rounded-full border-[1.5px] border-cyan-700 bg-white/40 text-cyan-800 hover:bg-white disabled:opacity-50',
     ghost: 'rounded-xl bg-transparent text-cyan-800 hover:bg-white/60 underline-offset-2',
   };
@@ -21,7 +21,7 @@ export function Button({ variant = 'primary', className = '', ...p }: ButtonHTML
 
 export function LinkButton({ href, children, variant = 'primary', className = '' }: { href: string; children: ReactNode; variant?: Variant; className?: string }) {
   const styles: Record<Variant, string> = {
-    primary: 'rounded-xl bg-cyan-700 text-white hover:bg-cyan-800',
+    primary: 'rounded-full bg-cyan-700 text-white hover:bg-cyan-800',
     secondary: 'rounded-full border-[1.5px] border-cyan-700 bg-white/40 text-cyan-800 hover:bg-white',
     ghost: 'rounded-xl text-cyan-800 hover:bg-white/60',
   };
@@ -33,7 +33,7 @@ export function LinkButton({ href, children, variant = 'primary', className = ''
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-3xl border border-white/80 bg-white/80 p-5 shadow-[0_8px_30px_rgba(31,37,99,0.06)] backdrop-blur-sm sm:p-6 ${className}`}>{children}</div>;
+  return <div className={`soft rounded-3xl p-5 sm:p-6 ${className}`}>{children}</div>;
 }
 
 type Tone = 'info' | 'good' | 'warn' | 'bad';
@@ -157,4 +157,9 @@ export function PageTitle({ title, intro }: { title: string; intro?: string }) {
       {intro && <p className="mt-2 max-w-2xl text-lg leading-relaxed text-slate-700">{intro}</p>}
     </div>
   );
+}
+
+/** The white panel that holds a page's content on top of the gradient. */
+export function Sheet({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return <div className={`sheet rounded-[2rem] p-4 sm:p-8 ${className}`}>{children}</div>;
 }

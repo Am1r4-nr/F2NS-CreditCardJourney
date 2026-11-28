@@ -223,7 +223,7 @@ const partial = scoreQuiz([QUIZ[0].answer, 99, null, null, null]);
 expect('quiz scoring: partial answers, wrong ones are listed for review', partial.answered === 2 && partial.score === 1 && partial.wrong.length === 1 && partial.wrong[0].id === QUIZ[1].id);
 // ---- REQ-9, REQ-10, REQ-1: workshop, demo walkthrough, first-3-months guide ----
 import { csvCell, entriesToCsv, averageRating, tally, togglePick, CSV_HEADER } from '../src/lib/workshop.ts';
-import { WALKTHROUGH, WALK_TOTAL_SECONDS, TARGET_SECONDS, formatClock } from '../src/data/walkthrough.ts';
+import { WALKTHROUGH } from '../src/data/walkthrough.ts';
 import { GUIDE } from '../src/data/guide.ts';
 import { ROUTES } from '../src/lib/router.ts';
 import type { WorkshopEntry } from '../src/state/types.ts';
@@ -243,11 +243,9 @@ expect('CSV makes spreadsheet formulas harmless', csvCell('=HYPERLINK("x")') ===
 const csv = entriesToCsv(testers);
 expect('CSV has a header and one row per tester, with the card features and chosen card', csv.split('\r\n').length === 5 && csv.startsWith(CSV_HEADER.map((h) => `"${h}"`).join(',')) && csv.includes('Annual fee; Interest rate') && csv.includes('CIMB Lite-i'), csv.slice(0, 200));
 
-expect('walkthrough has at most 8 steps and fits in 5 minutes', WALKTHROUGH.length <= 8 && WALK_TOTAL_SECONDS <= TARGET_SECONDS, { steps: WALKTHROUGH.length, seconds: WALK_TOTAL_SECONDS });
+expect('guide has at most 8 steps', WALKTHROUGH.length <= 8, WALKTHROUGH.length);
 expect('walkthrough covers all five stages in order', ['ready', 'cost', 'apply', 'track', 'use'].every((r, i, arr) => WALKTHROUGH.findIndex((s) => s.route === r) >= 0 && (i === 0 || WALKTHROUGH.findIndex((s) => s.route === r) > WALKTHROUGH.findIndex((s) => s.route === arr[i - 1]))));
-expect('walkthrough steps have a real screen, talking points in both languages and a time', WALKTHROUGH.every((s) => (ROUTES as string[]).includes(s.route) && s.points.length >= 1 && s.points.every((p) => p.en && p.ms) && s.title.en && s.title.ms && s.seconds > 0));
-expect('walkthrough shows both an approved and a rejected decision', WALKTHROUGH.some((s) => s.patch && s.patch.toString().includes("'approved'")) && WALKTHROUGH.some((s) => s.patch && s.patch.toString().includes("'rejected'")));
-expect('clock text', formatClock(0) === '0:00' && formatClock(75) === '1:15' && formatClock(300) === '5:00');
+expect('guide steps have a real screen and text in both languages', WALKTHROUGH.every((s) => (ROUTES as string[]).includes(s.route) && s.points.length >= 1 && s.points.every((p) => p.en && p.ms) && s.title.en && s.title.ms));
 
 expect('guide has 3 months with at least 3 actions each, in both languages', GUIDE.length === 3 && GUIDE.every((m) => m.actions.length >= 3 && m.actions.every((a) => a.text.en && a.text.ms)));
 expect('guide action ids are unique', new Set(GUIDE.flatMap((m) => m.actions.map((a) => a.id))).size === GUIDE.reduce((n, m) => n + m.actions.length, 0));

@@ -1,118 +1,77 @@
 import type { Bi } from '../lib/eligibility.ts';
 import type { Route } from '../lib/router.ts';
-import type { AppState } from '../state/types.ts';
-import { sampleData, todayIso } from '../lib/usage.ts';
 
-export interface WalkStep {
+export interface GuideStep {
   route: Route;
   title: Bi;
-  /** One or two sentences for the presenter to say. */
+  /** Plain instructions for a visitor: what this page is for and what to try. */
   points: Bi[];
-  /** Suggested time in seconds. */
-  seconds: number;
-  /** Puts the app in the right state for this step. Safe to run again. */
-  patch?: (s: AppState) => AppState;
 }
 
-export const TARGET_SECONDS = 300;
-
-export const WALKTHROUGH: WalkStep[] = [
+/** A short tour that tells a visitor how to use the site, one page at a time. */
+export const WALKTHROUGH: GuideStep[] = [
   {
     route: 'home',
-    seconds: 25,
-    title: { en: 'Meet Hafiz', ms: 'Kenali Hafiz' },
+    title: { en: 'Welcome', ms: 'Selamat datang' },
     points: [
-      { en: 'Hafiz is 25 and drives for a delivery app. He has no payslip and has never had a credit card.', ms: 'Hafiz berumur 25 dan memandu untuk aplikasi penghantaran. Dia tiada slip gaji dan tidak pernah ada kad kredit.' },
-      { en: 'His worry: “How do I prove my income?” Five stages answer it, shown at the top.', ms: 'Kebimbangannya: “Bagaimana saya membuktikan pendapatan?” Lima peringkat menjawabnya, ditunjukkan di atas.' },
+      { en: 'This site takes you from “Can I get a card?” to using it well, in five stages: Am I ready, Cost, Apply, Track, Use it well.', ms: 'Laman ini membawa anda daripada “Boleh saya dapat kad?” hingga menggunakannya dengan bijak, dalam lima peringkat: Sedia kah saya, Kos, Mohon, Jejak, Guna dengan bijak.' },
+      { en: 'Use the menu button (top left) to jump to any page, and EN / BM (top right) to change language. Nothing is sent to a bank.', ms: 'Guna butang menu (kiri atas) untuk ke mana-mana halaman, dan EN / BM (kanan atas) untuk tukar bahasa. Tiada apa dihantar kepada bank.' },
     ],
   },
   {
     route: 'ready',
-    seconds: 35,
     title: { en: '1. Am I ready?', ms: '1. Sedia kah saya?' },
     points: [
-      { en: 'A quick check before he applies. Gig income is fine. It tells him the reasons, in plain words.', ms: 'Semakan pantas sebelum dia memohon. Pendapatan gig tidak mengapa. Ia memberitahunya sebab-sebab, dalam bahasa mudah.' },
-      { en: 'Point out: this check does NOT affect his credit record.', ms: 'Tunjukkan: semakan ini TIDAK menjejaskan rekod kreditnya.' },
+      { en: 'Answer a few short questions about your age, work and income. Gig or freelance income is fine.', ms: 'Jawab beberapa soalan ringkas tentang umur, kerja dan pendapatan anda. Pendapatan gig atau bebas tidak mengapa.' },
+      { en: 'You get a result with reasons in plain words. This check does not affect your credit record.', ms: 'Anda mendapat keputusan dengan sebab dalam bahasa mudah. Semakan ini tidak menjejaskan rekod kredit anda.' },
     ],
-    patch: (s) => ({ ...s, readyDone: true, done: { ...s.done, ready: true } }),
   },
   {
     route: 'compare',
-    seconds: 40,
-    title: { en: 'Compare real cards', ms: 'Banding kad sebenar' },
+    title: { en: 'Compare cards', ms: 'Banding kad' },
     points: [
-      { en: 'Real cards from 15 Malaysian banks, side by side. “Best match for me” uses what Hafiz told us.', ms: 'Kad sebenar daripada 15 bank di Malaysia, bersebelahan. “Padanan terbaik untuk saya” menggunakan apa yang Hafiz beritahu kami.' },
-      { en: 'Show the filters, the tier buttons, and the Compare button (up to 3 cards).', ms: 'Tunjukkan penapis, butang tahap, dan butang Banding (sehingga 3 kad).' },
+      { en: 'Browse real cards from Malaysian banks. Use the filters and tier buttons to narrow the list. “Best match for me” uses your answers.', ms: 'Layari kad sebenar daripada bank di Malaysia. Guna penapis dan butang tahap untuk menyempitkan senarai. “Padanan terbaik untuk saya” menggunakan jawapan anda.' },
+      { en: 'Tick up to 3 cards and press Compare to see them side by side. Open a card for its fees and a link to the bank’s website.', ms: 'Tanda sehingga 3 kad dan tekan Banding untuk melihatnya bersebelahan. Buka kad untuk yuran dan pautan ke laman web bank.' },
     ],
   },
   {
     route: 'cost',
-    seconds: 40,
     title: { en: '2. What will it cost?', ms: '2. Berapa kosnya?' },
     points: [
-      { en: 'Move the slider. Pay in full and it costs nothing extra. Pay only the minimum and he pays more, for months.', ms: 'Gerakkan slaid. Bayar penuh dan tiada kos tambahan. Bayar minimum sahaja dan dia membayar lebih, selama berbulan-bulan.' },
-      { en: 'No hidden fees: every rate comes from one settings file.', ms: 'Tiada yuran tersembunyi: setiap kadar datang daripada satu fail tetapan.' },
+      { en: 'Move the slider to set how much you spend, then choose how you pay: in full, the minimum, or a fixed amount.', ms: 'Gerakkan slaid untuk menetapkan perbelanjaan anda, kemudian pilih cara bayar: penuh, minimum, atau jumlah tetap.' },
+      { en: 'You see the extra cost month by month. Paying in full costs nothing extra.', ms: 'Anda melihat kos tambahan bulan demi bulan. Bayar penuh tidak mengenakan kos tambahan.' },
     ],
-    patch: (s) => ({ ...s, sim: { spend: 500, mode: 'minimum', fixed: 100 }, done: { ...s.done, cost: true } }),
   },
   {
     route: 'apply',
-    seconds: 60,
     title: { en: '3. Apply', ms: '3. Mohon' },
     points: [
-      { en: 'The document checklist comes first, with a backup for each item. Then 5 short steps: MyKad scan fills his details in.', ms: 'Senarai semak dokumen datang dahulu, dengan alternatif bagi setiap item. Kemudian 5 langkah pendek: imbasan MyKad mengisi butirannya.' },
-      { en: 'Income proof: “connect bank or e-wallet” is recommended, so no payslip is needed. Show the “Why we ask this” notes and the full cost summary before submit.', ms: 'Bukti pendapatan: “hubungkan bank atau e-dompet” disyorkan, jadi slip gaji tidak diperlukan. Tunjukkan nota “Mengapa kami tanya” dan ringkasan kos penuh sebelum hantar.' },
+      { en: 'Start with the document checklist. Each item has a backup if you do not have it, for example a bank or e-wallet link instead of a payslip.', ms: 'Mulakan dengan senarai semak dokumen. Setiap item ada alternatif jika anda tidak memilikinya, contohnya pautan bank atau e-dompet ganti slip gaji.' },
+      { en: 'Then fill in 5 short steps. Tap “Why we ask this” to see the reason for a question. Your progress is saved, so you can come back later.', ms: 'Kemudian isi 5 langkah pendek. Tekan “Mengapa kami tanya” untuk melihat sebab sesuatu soalan. Kemajuan anda disimpan, jadi anda boleh kembali kemudian.' },
     ],
-    patch: (s) => ({ ...s, submission: null, draft: { ...s.draft, started: false, q: 0 } }),
   },
   {
     route: 'track',
-    seconds: 35,
-    title: { en: '4. Track: approved', ms: '4. Jejak: diluluskan' },
+    title: { en: '4. Track', ms: '4. Jejak' },
     points: [
-      { en: 'He gets a first answer at once, and a clear timeline. Final approval: same day, at most 3 days.', ms: 'Dia mendapat jawapan pertama serta-merta, dan garis masa yang jelas. Kelulusan akhir: hari yang sama, paling lama 3 hari.' },
-      { en: 'The approved screen gives the reasons and what to do first.', ms: 'Skrin diluluskan memberi sebab dan apa yang perlu dibuat dahulu.' },
+      { en: 'After you submit, this page shows where your application is and what happens next.', ms: 'Selepas anda hantar, halaman ini menunjukkan di mana permohonan anda dan apa yang berlaku seterusnya.' },
+      { en: 'Every answer comes with reasons and next steps, including how to reach a person.', ms: 'Setiap jawapan disertakan sebab dan langkah seterusnya, termasuk cara menghubungi seseorang.' },
     ],
-    patch: (s) => ({
-      ...s,
-      submission: s.submission ?? { ref: 'KAF-DEMO01', at: new Date().toISOString(), inPrinciple: 'likely' },
-      track: { outcome: 'approved', stage: 3 },
-      done: { ...s.done, apply: true, track: true },
-    }),
-  },
-  {
-    route: 'track',
-    seconds: 25,
-    title: { en: '4. Track: rejected', ms: '4. Jejak: ditolak' },
-    points: [
-      { en: 'Now the other outcome. A rejection always comes with reasons and next steps, never a blank “no”.', ms: 'Kini keputusan yang satu lagi. Penolakan sentiasa disertakan sebab dan langkah seterusnya, bukan “tidak” kosong.' },
-      { en: 'It says he can apply again later and how to reach a person.', ms: 'Ia menyatakan dia boleh memohon semula kemudian dan cara menghubungi seseorang.' },
-    ],
-    patch: (s) => ({ ...s, track: { outcome: 'rejected', stage: 3 } }),
   },
   {
     route: 'use',
-    seconds: 40,
     title: { en: '5. Use it well', ms: '5. Guna dengan bijak' },
     points: [
-      { en: 'After approval: when to pay, pay-in-full vs minimum, usage against his limit, and the on-time tracker.', ms: 'Selepas kelulusan: bila untuk bayar, bayar penuh vs minimum, penggunaan berbanding had, dan penjejak tepat masa.' },
-      { en: 'The first-3-months checklist and the Learn quiz help him build a good record.', ms: 'Senarai semak 3 bulan pertama dan kuiz Belajar membantunya membina rekod yang baik.' },
+      { en: 'Add your spending and payments to see your balance, your due date and how much of your limit you use. Turn on a reminder so you pay on time.', ms: 'Tambah perbelanjaan dan bayaran anda untuk melihat baki, tarikh akhir dan berapa banyak had yang anda guna. Hidupkan peringatan supaya anda bayar tepat masa.' },
+      { en: 'The first-3-months checklist helps you build a good record.', ms: 'Senarai semak 3 bulan pertama membantu anda membina rekod yang baik.' },
     ],
-    patch: (s) => {
-      const d = sampleData(todayIso());
-      return {
-        ...s,
-        track: { ...s.track, outcome: 'approved', stage: 3 },
-        use: { ...s.use, statementDay: d.statementDay, txns: d.txns, payments: d.payments },
-        done: { ...s.done, use: true },
-      };
-    },
+  },
+  {
+    route: 'learn',
+    title: { en: 'Learn and get help', ms: 'Belajar dan dapatkan bantuan' },
+    points: [
+      { en: 'Short lessons and a 5-question quiz explain interest, minimum payments and credit scores.', ms: 'Pelajaran ringkas dan kuiz 5 soalan menerangkan faedah, bayaran minimum dan skor kredit.' },
+      { en: 'Need help on any page? Use the help button at the bottom right to chat or call. You can reopen this guide any time from the Guide button at the top.', ms: 'Perlukan bantuan di mana-mana halaman? Guna butang bantuan di kanan bawah untuk sembang atau telefon. Anda boleh buka semula panduan ini bila-bila masa melalui butang Panduan di atas.' },
+    ],
   },
 ];
-
-export const WALK_TOTAL_SECONDS = WALKTHROUGH.reduce((n, s) => n + s.seconds, 0);
-
-export function formatClock(totalSeconds: number): string {
-  const s = Math.max(0, Math.floor(totalSeconds));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-}
